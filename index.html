@@ -4,233 +4,379 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Penomoran Inspeksi</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      background-color: #f0f2f5;
+    }
+    /* Sidebar */
+    .sidebar {
+      background-color: #1e2a3a;
+      min-height: 100vh;
+      width: 260px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding: 1.5rem 1rem;
+      color: #fff;
+      transition: all 0.3s;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar .brand {
+      font-size: 1.25rem;
+      font-weight: 700;
+      border-bottom: 1px solid #3a4a5e;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .sidebar .nav-link {
+      color: #b0c4de;
+      padding: 0.7rem 1rem;
+      border-radius: 0.4rem;
+      transition: background 0.2s, color 0.2s;
+      text-decoration: none;
+      display: block;
+    }
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active {
+      background-color: #2c3e56;
+      color: #fff;
+    }
+    .sidebar .nav-link i {
+      margin-right: 0.75rem;
+      width: 1.25rem;
+      text-align: center;
+    }
+    .sidebar .nav-link.spreadsheet-link {
+      color: #2ecc71;
+    }
+    .sidebar .nav-link.spreadsheet-link:hover {
+      background-color: #27ae60;
+      color: #fff;
+    }
+    .sidebar .footer-text {
+      margin-top: auto;
+      padding-top: 0.75rem;
+      border-top: 1px solid #3a4a5e;
+      font-size: 0.75rem;
+      color: #8a9aa8;
+      text-align: center;
+    }
+    .main-content {
+      margin-left: 260px;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+    .card {
+      border-radius: 1rem;
+      border: none;
+      box-shadow: 0 0.5rem 1.2rem rgba(0,0,0,0.06);
+    }
+    .card-header {
+      background: transparent;
+      border-bottom: 1px solid #e9ecef;
+      font-weight: 600;
+    }
+    .form-label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+    .form-control, .form-select {
+      border-radius: 0.5rem;
+      border: 1px solid #ced4da;
+      padding: 0.5rem 0.75rem;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.2);
+    }
+    .btn-primary {
+      background-color: #0d6efd;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      font-weight: 500;
+      border-radius: 0.5rem;
+    }
+    .btn-primary:hover {
+      background-color: #0b5ed7;
+    }
+    .result-box {
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      margin-top: 1.5rem;
+    }
+    .result-box .nomor {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: 'Courier New', monospace;
+      background: #e9ecef;
+      padding: 0.3rem 0.8rem;
+      border-radius: 0.4rem;
+      display: inline-block;
+    }
+    /* Responsif: sidebar menjadi horizontal di mobile */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        position: relative;
+        min-height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 0.75rem 1rem;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .sidebar .brand {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+        font-size: 1rem;
+      }
+      .sidebar .nav {
+        flex-direction: row !important;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+      }
+      .sidebar .nav-link {
+        padding: 0.3rem 0.7rem;
+        font-size: 0.85rem;
+      }
+      .sidebar .footer-text {
+        display: none;
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+    }
+  </style>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+<body>
 
-  <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md my-4">
-    <h2 class="text-2xl font-bold text-slate-800 mb-6 text-center border-b pb-3 border-slate-200">
-      Sistem Penomoran Inspeksi
-    </h2>
-    
-    <form id="inspectionForm" onsubmit="submitForm(event)" class="space-y-5">
-      
-      <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1">Timestamp</label>
-        <input type="text" id="timestampInput" readonly class="w-full p-2.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-500 font-mono text-sm focus:outline-none">
-      </div>
-
-      <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1">Judul Berita Acara</label>
-        <input type="text" id="judulBeritaAcara" required placeholder="Masukkan judul berita acara..." class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-sm">
-      </div>
-      
-      <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1">Jenis Usaha</label>
-        <select id="jenisUsaha" required class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-sm">
-          <option value="" disabled selected>-- Pilih Jenis Usaha --</option>
-          <option value="A">A: IOT dan atau IEBA</option>
-          <option value="B">B: UKOT atau UMOT</option>
-          <option value="C">C: IF Produksi OBA,OK dan atau SK</option>
-          <option value="D">D: IP Produksi SK</option>
-          <option value="F">F: IK Produksi SK</option> 
-          <option value="G">G: Importir OBA,OK dan atau SK</option>
-          <option value="H">H: BUBP kontrak OBA,OK dan atau SK</option>
-          <option value="I">I: PBOT dan atau PBF</option>
-          <option value="J">J: Fasyankes, fasyanfar dan atau IFP</option>
-          <option value="K">K: Pengecer</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1">Jenis Inspeksi</label>
-        <select id="jenisInspeksi" required class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-sm">
-          <option value="" disabled selected>-- Pilih Jenis Inspeksi --</option>
-          <option value="ST">ST: sertifikasi/rekomendasi/fasber</option>
-          <option value="RT">RT: Rutin</option>
-          <option value="KG">KG: Kasus GMP</option>
-          <option value="KN">KN: Kasus Non-GMP</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1">Metode Inspeksi</label>
-        <select id="metodeInspeksi" required class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-sm">
-          <option value="" disabled selected>-- Pilih Metode Inspeksi --</option>
-          <option value="OI">OI: Onsite Inspection</option>
-          <option value="RI">RI: Remote Inspection</option>
-          <option value="HI">HI: Hybrid Inspection</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1">Petugas</label>
-        <input type="text" id="petugas" required placeholder="Nama petugas..." class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-sm">
-      </div>
-
-      <button type="submit" id="btnSubmit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 shadow-sm cursor-pointer">
-        Generate & Simpan Nomor
-      </button>
-    </form>
-
-    <div class="mt-4 text-center">
-      <a href="https://docs.google.com/spreadsheets/d/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/edit?usp=sharing" 
-         target="_blank" 
-         class="inline-block bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200 shadow-sm cursor-pointer text-sm">
-        📊 Buka Spreadsheet Data
-      </a>
-      <p class="text-xs text-slate-400 mt-1">Ganti URL dengan link spreadsheet Anda</p>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="brand">
+      <i class="fas fa-clipboard-list me-2"></i>Sistem Penomoran
     </div>
-
+    <nav class="nav flex-column">
+      <a href="#" class="nav-link active">
+        <i class="fas fa-edit"></i> Input Data
+      </a>
+      <a href="#" class="nav-link spreadsheet-link" onclick="window.open('https://docs.google.com/spreadsheets/d/1zRrJUe2x6nO62HiEKX73mspp_OnCnna4_LgcoUmhSHs/edit?gid=0#gid=0','_blank')">
+        <i class="fas fa-table"></i> Buka Spreadsheet
+      </a>
+    </nav>
+    <div class="footer-text">
+      <i class="fas fa-shield-alt me-1"></i> v1.0
+    </div>
   </div>
 
-  <script>
-    // Ganti dengan URL GAS Anda (pastikan sudah di-deploy ulang)
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwsMsBo7C6pA4wo3MCTF0NRkONSz2eO10W5bpmSdAYYZ5IM_2SwpFPdAN8wXtB05THx4w/exec";
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div class="container-fluid">
+      <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+          <div class="card">
+            <div class="card-header">
+              <h4 class="mb-0"><i class="fas fa-pen-alt me-2"></i>Formulir Inspeksi</h4>
+            </div>
+            <div class="card-body">
+              <form id="inspectionForm" onsubmit="submitForm(event)">
 
+                <!-- Baris 1: Timestamp (full width) -->
+                <div class="row mb-3">
+                  <div class="col-12">
+                    <label for="timestampInput" class="form-label">Timestamp</label>
+                    <input type="text" id="timestampInput" readonly class="form-control bg-light text-secondary font-monospace">
+                  </div>
+                </div>
+
+                <!-- Baris 2: Judul BA (full width) -->
+                <div class="row mb-3">
+                  <div class="col-12">
+                    <label for="judulBeritaAcara" class="form-label">Judul Berita Acara</label>
+                    <input type="text" id="judulBeritaAcara" required placeholder="Masukkan judul berita acara..." class="form-control">
+                  </div>
+                </div>
+
+                <!-- Baris 3: Jenis Usaha + Jenis Inspeksi (horizontal, 2 kolom) -->
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="jenisUsaha" class="form-label">Jenis Usaha</label>
+                    <select id="jenisUsaha" required class="form-select">
+                      <option value="" disabled selected>-- Pilih --</option>
+                      <option value="A">A: IOT dan atau IEBA</option>
+                      <option value="B">B: UKOT atau UMOT</option>
+                      <option value="C">C: IF Produksi OBA,OK dan atau SK</option>
+                      <option value="D">D: IP Produksi SK</option>
+                      <option value="F">F: IK Produksi SK</option>
+                      <option value="G">G: Importir OBA,OK dan atau SK</option>
+                      <option value="H">H: BUBP kontrak OBA,OK dan atau SK</option>
+                      <option value="I">I: PBOT dan atau PBF</option>
+                      <option value="J">J: Fasyankes, fasyanfar dan atau IFP</option>
+                      <option value="K">K: Pengecer</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="jenisInspeksi" class="form-label">Jenis Inspeksi</label>
+                    <select id="jenisInspeksi" required class="form-select">
+                      <option value="" disabled selected>-- Pilih --</option>
+                      <option value="ST">ST: sertifikasi/rekomendasi/fasber</option>
+                      <option value="RT">RT: Rutin</option>
+                      <option value="KG">KG: Kasus GMP</option>
+                      <option value="KN">KN: Kasus Non-GMP</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Baris 4: Metode Inspeksi + Petugas (horizontal, 2 kolom) -->
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="metodeInspeksi" class="form-label">Metode Inspeksi</label>
+                    <select id="metodeInspeksi" required class="form-select">
+                      <option value="" disabled selected>-- Pilih --</option>
+                      <option value="OI">OI: Onsite Inspection</option>
+                      <option value="RI">RI: Remote Inspection</option>
+                      <option value="HI">HI: Hybrid Inspection</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="petugas" class="form-label">Nama Petugas</label>
+                    <input type="text" id="petugas" required placeholder="Nama petugas..." class="form-control">
+                  </div>
+                </div>
+
+                <!-- Tombol Submit -->
+                <div class="d-grid gap-2 mt-4">
+                  <button type="submit" id="btnSubmit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save me-2"></i>Generate & Simpan Nomor
+                  </button>
+                </div>
+              </form>
+
+              <!-- Hasil -->
+              <div id="resultArea" class="result-box d-none">
+                <p id="resultStatus" class="fw-bold mb-1"></p>
+                <p id="resultDetail" class="nomor"></p>
+                <p class="text-muted small mt-2"><i class="fas fa-copy me-1"></i>Klik 2× pada nomor untuk menyalin</p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // ===== KONFIGURASI =====
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxDVEDVT8asXmjBvhYZRAKSLsnrCDyzMj8MgGxg66ZYf7_pAr8kTX5mLQOo4tbjZAO9/exec";
+
+    // ===== TIMESTAMP =====
     function updateTimestampField() {
       const now = new Date();
-      const options = { 
+      const options = {
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit', second: '2-digit',
-        hour12: false 
+        hour12: false
       };
       document.getElementById('timestampInput').value = now.toLocaleString('id-ID', options).replace(/\./g, ':');
     }
-    
     updateTimestampField();
     setInterval(updateTimestampField, 1000);
 
-    // Counter lokal
-    function getLocalCounter() {
-      let counter = parseInt(localStorage.getItem('inspeksiCounter')) || 1;
-      return counter;
-    }
+    // ===== DOUBLE-CLICK COPY =====
+    document.getElementById('resultDetail').addEventListener('dblclick', function() {
+      const text = this.innerText;
+      if (text) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert('Nomor disalin: ' + text);
+        }).catch(() => {
+          const range = document.createRange();
+          range.selectNode(this);
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+          document.execCommand('copy');
+          alert('Nomor disalin: ' + text);
+        });
+      }
+    });
 
-    function incrementLocalCounter() {
-      let counter = getLocalCounter() + 1;
-      localStorage.setItem('inspeksiCounter', counter);
-    }
-
+    // ===== SUBMIT =====
     async function submitForm(e) {
       e.preventDefault();
-      
+
       const btn = document.getElementById('btnSubmit');
+      const resultArea = document.getElementById('resultArea');
+      const resultStatus = document.getElementById('resultStatus');
+      const resultDetail = document.getElementById('resultDetail');
+
       btn.disabled = true;
-      btn.innerText = "Memproses...";
-      btn.classList.add('opacity-50');
-      
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memproses...';
+
       const eUsaha = document.getElementById('jenisUsaha');
       const eInspeksi = document.getElementById('jenisInspeksi');
       const eMetode = document.getElementById('metodeInspeksi');
       const eJudulBA = document.getElementById('judulBeritaAcara');
       const ePetugas = document.getElementById('petugas');
       const eTimestamp = document.getElementById('timestampInput').value;
-      
-      // Validasi
-      if (!eUsaha.value || !eInspeksi.value || !eMetode.value || !eJudulBA.value.trim() || !ePetugas.value.trim()) {
-        alert('⚠️ Semua field harus diisi!');
-        btn.disabled = false;
-        btn.innerText = "Generate & Simpan Nomor";
-        btn.classList.remove('opacity-50');
-        return;
-      }
-      
+
       const payload = {
         timestamp: eTimestamp,
-        judulBeritaAcara: eJudulBA.value.trim(),
+        judulBeritaAcara: eJudulBA.value,
         jenisUsaha: eUsaha.value,
         jenisUsahaText: eUsaha.options[eUsaha.selectedIndex].text,
         jenisInspeksiText: eInspeksi.options[eInspeksi.selectedIndex].text,
         metodeInspeksi: eMetode.value,
         metodeInspeksiText: eMetode.options[eMetode.selectedIndex].text,
-        petugas: ePetugas.value.trim()
+        petugas: ePetugas.value
       };
-      
-      let nomorFinal = null;
-      
+
+      resultArea.classList.remove('d-none');
+
       try {
-        // --- Coba dengan mode 'cors' ---
-        console.log('Mencoba dengan CORS...');
         const response = await fetch(GAS_WEB_APP_URL, {
           method: 'POST',
           mode: 'cors',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify(payload)
         });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        
+
+        if (!response.ok) throw new Error('HTTP ' + response.status);
         const result = await response.json();
+
         if (result.status === 'success') {
-          nomorFinal = result.nomor;
+          resultArea.className = 'result-box bg-success bg-opacity-10 text-success';
+          resultStatus.innerText = "✓ Data Tersimpan!";
+          resultDetail.innerText = result.nomor;
         } else {
-          throw new Error(result.message || 'Gagal menyimpan data');
+          throw new Error(result.message || 'Gagal menyimpan');
         }
-        
+
         // Reset form
         eJudulBA.value = "";
         eUsaha.value = "";
         eInspeksi.value = "";
         eMetode.value = "";
         ePetugas.value = "";
-        
-        alert(`✅ Data berhasil disimpan!\n\nNomor Inspeksi (dari server):\n${nomorFinal}`);
-        
+
       } catch (error) {
-        // Jika cors gagal, periksa apakah itu karena CORS atau karena error lain
-        const isCorsError = error.message.includes('Failed to fetch') || 
-                            error.message.includes('NetworkError') ||
-                            error.message.includes('Network request failed') ||
-                            error.message === 'Failed to fetch';
-        
-        if (isCorsError) {
-          // CORS error -> fallback ke no-cors (tapi tetap tidak bisa baca response)
-          console.warn('CORS error, fallback ke no-cors...');
-          try {
-            await fetch(GAS_WEB_APP_URL, {
-              method: 'POST',
-              mode: 'no-cors',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-            
-            // Buat nomor lokal
-            const tgl = new Date();
-            const tahun2Digit = tgl.getFullYear().toString().slice(-2);
-            const bulan = ("0" + (tgl.getMonth() + 1)).slice(-2);
-            const jenisUsaha = eUsaha.value;
-            const metodeInspeksi = eMetode.value;
-            const counter = getLocalCounter();
-            const nomorUrutFormat = ("000" + counter).slice(-3);
-            const nomorLokal = `${tahun2Digit}.${bulan}.${jenisUsaha}.${metodeInspeksi}.25B.${nomorUrutFormat}`;
-            
-            // Naikkan counter
-            incrementLocalCounter();
-            
-            // Reset form
-            eJudulBA.value = "";
-            eUsaha.value = "";
-            eInspeksi.value = "";
-            eMetode.value = "";
-            ePetugas.value = "";
-            
-            alert(`⚠️ Data dikirim dengan mode no-cors (CORS gagal).\n\nNomor Inspeksi (lokal):\n${nomorLokal}\n\n🔴 Periksa spreadsheet: jika data tidak muncul, mungkin ada error di sisi server atau URL salah.`);
-            
-          } catch (noCorsError) {
-            alert(`❌ Gagal mengirim data bahkan dengan no-cors:\n${noCorsError.message}`);
-          }
-        } else {
-          // Bukan CORS error, misalnya URL salah atau GAS error
-          alert(`❌ Gagal mengirim data (bukan CORS):\n${error.message}\n\nPeriksa URL GAS dan log server.`);
-        }
+        resultArea.className = 'result-box bg-danger bg-opacity-10 text-danger';
+        resultStatus.innerText = "✗ Gagal:";
+        resultDetail.innerText = error.message;
       } finally {
         btn.disabled = false;
-        btn.innerText = "Generate & Simpan Nomor";
-        btn.classList.remove('opacity-50');
+        btn.innerHTML = '<i class="fas fa-save me-2"></i>Generate & Simpan Nomor';
       }
     }
   </script>
