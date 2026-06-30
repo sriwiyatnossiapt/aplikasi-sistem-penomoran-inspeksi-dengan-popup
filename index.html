@@ -1,60 +1,107 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistem Penomoran Inspeksi</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sistem Penomoran Inspeksi</title>
   <!-- Tambahkan baris ini untuk PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2563eb">
   <link rel="apple-touch-icon" href="icon.png">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
     body { background-color: #f0f2f5; }
     .sidebar {
-      background-color: #1e2a3a; min-height: 100vh; width: 260px; position: fixed; top: 0; left: 0;
-      padding: 1.5rem 1rem; color: #fff; transition: all 0.3s; z-index: 1000; display: flex; flex-direction: column;
+      background-color: #1e2a3a; min-height: 100vh; width: 260px; position: fixed;
+      top: 0; left: 0; padding: 1.5rem 1rem; color: #fff; transition: all 0.3s;
+      z-index: 1000; display: flex; flex-direction: column;
     }
-    .sidebar .brand { font-size: 1.25rem; font-weight: 700; border-bottom: 1px solid #3a4a5e; padding-bottom: 0.75rem; margin-bottom: 1.5rem; text-align: center; }
-    .sidebar .nav-link { color: #b0c4de; padding: 0.7rem 1rem; border-radius: 0.4rem; transition: background 0.2s, color 0.2s; text-decoration: none; display: block; }
-    .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: #2c3e56; color: #fff; }
+    .sidebar .brand {
+      font-size: 1.25rem; font-weight: 700; border-bottom: 1px solid #3a4a5e;
+      padding-bottom: 0.75rem; margin-bottom: 1.5rem; text-align: center;
+    }
+    .sidebar .nav-link {
+      color: #b0c4de; padding: 0.7rem 1rem; border-radius: 0.4rem;
+      transition: background 0.2s, color 0.2s; text-decoration: none; display: block;
+    }
+    .sidebar .nav-link:hover, .sidebar .nav-link.active {
+      background-color: #2c3e56; color: #fff;
+    }
     .sidebar .nav-link i { margin-right: 0.75rem; width: 1.25rem; text-align: center; }
     .sidebar .nav-link.spreadsheet-link { color: #2ecc71; }
     .sidebar .nav-link.spreadsheet-link:hover { background-color: #27ae60; color: #fff; }
-    .sidebar .footer-text { margin-top: auto; padding-top: 0.75rem; border-top: 1px solid #3a4a5e; font-size: 0.75rem; color: #8a9aa8; text-align: center; }
+    .sidebar .footer-text {
+      margin-top: auto; padding-top: 0.75rem; border-top: 1px solid #3a4a5e;
+      font-size: 0.75rem; color: #8a9aa8; text-align: center;
+    }
     .main-content { margin-left: 260px; padding: 2rem; min-height: 100vh; }
     .card { border-radius: 1rem; border: none; box-shadow: 0 0.5rem 1.2rem rgba(0,0,0,0.06); }
     .card-header { background: transparent; border-bottom: 1px solid #e9ecef; font-weight: 600; }
     .form-label { font-weight: 500; margin-bottom: 0.25rem; }
-    .form-control, .form-select { border-radius: 0.5rem; border: 1px solid #ced4da; padding: 0.5rem 0.75rem; }
-    .form-control:focus, .form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.2); }
-    .btn-primary { background-color: #0d6efd; border: none; padding: 0.6rem 1.5rem; font-weight: 500; border-radius: 0.5rem; }
+    .form-control, .form-select {
+      border-radius: 0.5rem; border: 1px solid #ced4da; padding: 0.5rem 0.75rem;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #0d6efd; box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.2);
+    }
+    .btn-primary {
+      background-color: #0d6efd; border: none; padding: 0.6rem 1.5rem;
+      font-weight: 500; border-radius: 0.5rem;
+    }
     .btn-primary:hover { background-color: #0b5ed7; }
+    .btn-outline-danger { border-radius: 0.5rem; }
     .result-box { border-radius: 0.75rem; padding: 1rem 1.25rem; margin-top: 1.5rem; }
-    .result-box .nomor { font-size: 1.5rem; font-weight: 700; font-family: 'Courier New', monospace; background: #e9ecef; padding: 0.3rem 0.8rem; border-radius: 0.4rem; display: inline-block; }
+    .result-box .nomor {
+      font-size: 1.5rem; font-weight: 700; font-family: 'Courier New', monospace;
+      background: #e9ecef; padding: 0.3rem 0.8rem; border-radius: 0.4rem;
+      display: inline-block;
+    }
+    .petugas-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .petugas-row .form-select { flex: 1; }
+    .petugas-row .btn-remove {
+      flex-shrink: 0;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+    }
+    #tambahPetugasBtn {
+      margin-top: 0.5rem;
+    }
     @media (max-width: 768px) {
-      .sidebar { width: 100%; position: relative; min-height: auto; flex-direction: row; flex-wrap: wrap; padding: 0.75rem 1rem; justify-content: space-between; align-items: center; }
+      .sidebar {
+        width: 100%; position: relative; min-height: auto; flex-direction: row;
+        flex-wrap: wrap; padding: 0.75rem 1rem; justify-content: space-between;
+        align-items: center;
+      }
       .sidebar .brand { border-bottom: none; margin-bottom: 0; padding-bottom: 0; font-size: 1rem; }
       .sidebar .nav { flex-direction: row !important; gap: 0.25rem; flex-wrap: wrap; }
       .sidebar .nav-link { padding: 0.3rem 0.7rem; font-size: 0.85rem; }
       .sidebar .footer-text { display: none; }
       .main-content { margin-left: 0; padding: 1rem; }
+      .petugas-row { flex-wrap: wrap; }
     }
   </style>
 </head>
 <body>
 
+  <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="brand"><i class="fas fa-clipboard-list me-2"></i>Sistem Penomoran</div>
     <nav class="nav flex-column">
       <a href="#" class="nav-link active"><i class="fas fa-edit"></i> Input Data</a>
-      <a href="#" class="nav-link spreadsheet-link" onclick="window.open('https://docs.google.com/spreadsheets/d/1zRrJUe2x6nO62HiEKX73mspp_OnCnna4_LgcoUmhSHs/edit?gid=0#gid=0','_blank')"><i class="fas fa-table"></i> Buka Spreadsheet</a>
+      <a href="#" class="nav-link spreadsheet-link" onclick="window.open('https://docs.google.com/spreadsheets/d/1zRrJUe2x6nO62HiEKX73mspp_OnCnna4_LgcoUmhSHs/edit?gid=0#gid=0','_blank')">
+        <i class="fas fa-table"></i> Buka Spreadsheet
+      </a>
     </nav>
     <div class="footer-text"><i class="fas fa-shield-alt me-1"></i> v1.0</div>
   </div>
 
+  <!-- MAIN CONTENT -->
   <div class="main-content">
     <div class="container-fluid">
       <div class="row justify-content-center">
@@ -75,8 +122,8 @@
                 <!-- Judul Berita Acara -->
                 <div class="row mb-3">
                   <div class="col-12">
-                    <label for="judulBeritaAcara" class="form-label">Judul Berita Acara</label>
-                    <input type="text" id="judulBeritaAcara" required placeholder="Masukkan judul berita acara..." class="form-control">
+                    <label for="judulBeritaAcara" class="form-label">Judul Berita Acara/Nama sarana</label>
+                    <input type="text" id="judulBeritaAcara" required placeholder="Masukkan judul berita acara/nama sarana..." class="form-control">
                   </div>
                 </div>
 
@@ -110,7 +157,7 @@
                   </div>
                 </div>
 
-                <!-- Metode Inspeksi + Petugas -->
+                <!-- Metode Inspeksi + Petugas (dinamis) -->
                 <div class="row mb-3">
                   <div class="col-md-6">
                     <label for="metodeInspeksi" class="form-label">Metode Inspeksi</label>
@@ -122,9 +169,15 @@
                     </select>
                   </div>
                   <div class="col-md-6">
-                    <label for="petugas" class="form-label">Nama Petugas</label>
-                    <input type="text" id="petugas" required placeholder="Nama petugas..." class="form-control">
-                  </div>
+                    <label class="form-label">Nama Petugas</label>
+                    <!-- Container untuk daftar dropdown petugas -->
+                    <div id="petugas-container">
+                      <!-- Baris pertama akan ditambahkan oleh JavaScript -->
+                    </div>
+                    <button type="button" id="tambahPetugasBtn" class="btn btn-sm btn-outline-primary mt-1">
+                      <i class="fas fa-plus me-1"></i>Tambah Petugas
+                    </button>
+                   </div>
                 </div>
 
                 <!-- Tombol Submit -->
@@ -156,13 +209,25 @@
     // ============================
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxDVEDVT8asXmjBvhYZRAKSLsnrCDyzMj8MgGxg66ZYf7_pAr8kTX5mLQOo4tbjZAO9/exec";
 
+    // Daftar nama petugas (opsional, bisa ditambah)
+    const DAFTAR_PETUGAS = [
+'Leni Maryati','Insan Nurul Padjar','Mila Nur Mauludiawati', 'Fitria Puspawati', 'Desy Yudiawati','Sufiati',
+'Vinnie','Lusiea','Wenny Warastuti','Nurlaila','Inayah','Santi Nurhayati','Rizqie Noor A','Yanti','Dwi Arun',
+'Ratna Kumalasari','Mimin Siti Aminah','Sari Puspita Dewi','Sri Wiyatno','Aryo Budhi S','Resa Ansi R','Dinny',
+'Evie Prihanita','Euis Sridaryati','Elin','Auliya','Sofy','Sinta'];
+
     // ============================
     //  TIMESTAMP
     // ============================
     function updateTimestampField() {
       const now = new Date();
-      const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-      document.getElementById('timestampInput').value = now.toLocaleString('id-ID', options).replace(/\./g, ':');
+      const options = {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
+      };
+      document.getElementById('timestampInput').value =
+        now.toLocaleString('id-ID', options).replace(/\./g, ':');
     }
     updateTimestampField();
     setInterval(updateTimestampField, 1000);
@@ -173,57 +238,78 @@
     document.getElementById('resultDetail').addEventListener('dblclick', function() {
       const text = this.innerText;
       if (text) {
-        navigator.clipboard.writeText(text).then(() => alert('Nomor disalin: ' + text))
-          .catch(() => { const range = document.createRange(); range.selectNode(this); window.getSelection().removeAllRanges(); window.getSelection().addRange(range); document.execCommand('copy'); alert('Nomor disalin: ' + text); });
+        navigator.clipboard.writeText(text)
+          .then(() => alert('Nomor disalin: ' + text))
+          .catch(() => {
+            const range = document.createRange();
+            range.selectNode(this);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            alert('Nomor disalin: ' + text);
+          });
       }
     });
 
     // ============================
-    //  AUTO-FILL PETUGAS dari localStorage
+    //  DINAMIS DROPDOWN PETUGAS
     // ============================
-    const inputPetugas = document.getElementById('petugas');
-    const petugasTerakhir = localStorage.getItem('petugasTerakhir');
-    if (petugasTerakhir) {
-      inputPetugas.value = petugasTerakhir;
+    const container = document.getElementById('petugas-container');
+    const tambahBtn = document.getElementById('tambahPetugasBtn');
+
+    // Fungsi untuk membuat elemen select dengan opsi
+    function buatSelectPetugas(selectedValue = '') {
+      const select = document.createElement('select');
+      select.className = 'form-select';
+      select.required = true;
+      // Tambahkan opsi default
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = '-- Pilih Petugas --';
+      defaultOpt.disabled = true;
+      defaultOpt.selected = true;
+      select.appendChild(defaultOpt);
+
+      DAFTAR_PETUGAS.forEach(nama => {
+        const opt = document.createElement('option');
+        opt.value = nama;
+        opt.textContent = nama;
+        if (nama === selectedValue) opt.selected = true;
+        select.appendChild(opt);
+      });
+      return select;
     }
 
-    // ============================
-    //  SEMBUNYIKAN HASIL SAAT USER MULAI INPUT
-    // ============================
-    function hideResultOnInteraction() {
-      const resultArea = document.getElementById('resultArea');
-      if (!resultArea.classList.contains('d-none')) {
-        resultArea.classList.add('d-none');
-      }
+    // Fungsi untuk menambahkan baris petugas baru
+    function tambahBarisPetugas(selectedValue = '') {
+      const row = document.createElement('div');
+      row.className = 'petugas-row';
+
+      const select = buatSelectPetugas(selectedValue);
+      row.appendChild(select);
+
+      const btnHapus = document.createElement('button');
+      btnHapus.type = 'button';
+      btnHapus.className = 'btn btn-sm btn-outline-danger btn-remove';
+      btnHapus.innerHTML = '<i class="fas fa-times"></i>';
+      btnHapus.addEventListener('click', function() {
+        row.remove();
+        // Jika tidak ada baris tersisa, tambahkan satu baris kosong
+        if (container.children.length === 0) {
+          tambahBarisPetugas();
+        }
+      });
+      row.appendChild(btnHapus);
+
+      container.appendChild(row);
     }
 
-    // Daftar elemen yang memicu sembunyi hasil
-    const triggerElements = [
-      document.getElementById('judulBeritaAcara'),
-      document.getElementById('jenisUsaha'),
-      document.getElementById('jenisInspeksi'),
-      document.getElementById('metodeInspeksi'),
-      document.getElementById('petugas'),
-      document.getElementById('btnSubmit')
-    ];
+    // Inisialisasi: tambahkan satu baris di awal
+    tambahBarisPetugas();
 
-    triggerElements.forEach(el => {
-      if (el) {
-        el.addEventListener('focus', hideResultOnInteraction);
-        if (el.tagName === 'SELECT') {
-          el.addEventListener('change', hideResultOnInteraction);
-        }
-        if (el.tagName === 'INPUT') {
-          el.addEventListener('input', hideResultOnInteraction);
-        }
-      }
-    });
-
-    // Klik di area form (selain tombol submit) juga menyembunyikan hasil
-    document.getElementById('inspectionForm').addEventListener('click', function(e) {
-      if (e.target.id !== 'btnSubmit') {
-        hideResultOnInteraction();
-      }
+    // Event tombol tambah
+    tambahBtn.addEventListener('click', function() {
+      tambahBarisPetugas();
     });
 
     // ============================
@@ -240,19 +326,27 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memproses...';
 
-      const eUsaha = document.getElementById('jenisUsaha');
-      const eInspeksi = document.getElementById('jenisInspeksi');
-      const eMetode = document.getElementById('metodeInspeksi');
-      const eJudulBA = document.getElementById('judulBeritaAcara');
-      const ePetugas = document.getElementById('petugas');
-      const eTimestamp = document.getElementById('timestampInput').value;
+      // Ambil nilai dari semua dropdown petugas
+      const selects = container.querySelectorAll('select');
+      let petugasList = [];
+      selects.forEach(sel => {
+        if (sel.value) petugasList.push(sel.value);
+      });
 
-      if (!ePetugas.value.trim()) {
-        alert('⚠️ Nama petugas harus diisi!');
+      // Validasi: minimal 1 petugas terpilih
+      if (petugasList.length === 0) {
+        alert('⚠️ Pilih minimal 1 nama petugas!');
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-save me-2"></i>Generate & Simpan Nomor';
         return;
       }
+      const petugasGabung = petugasList.join(', ');
+
+      const eUsaha = document.getElementById('jenisUsaha');
+      const eInspeksi = document.getElementById('jenisInspeksi');
+      const eMetode = document.getElementById('metodeInspeksi');
+      const eJudulBA = document.getElementById('judulBeritaAcara');
+      const eTimestamp = document.getElementById('timestampInput').value;
 
       const payload = {
         timestamp: eTimestamp,
@@ -263,7 +357,7 @@
         jenisInspeksiText: eInspeksi.options[eInspeksi.selectedIndex].text,
         metodeInspeksi: eMetode.value,
         metodeInspeksiText: eMetode.options[eMetode.selectedIndex].text,
-        petugas: ePetugas.value.trim()
+        petugas: petugasGabung
       };
 
       resultArea.classList.remove('d-none');
@@ -279,23 +373,28 @@
         const result = await response.json();
         if (result.status === 'success') {
           resultArea.className = 'result-box bg-success bg-opacity-10 text-success';
-          resultStatus.innerText = "✓ Data Tersimpan!";
+          resultStatus.innerText = '✓ Data Tersimpan!';
           resultDetail.innerText = result.nomor;
 
-          localStorage.setItem('petugasTerakhir', ePetugas.value.trim());
-
-          // Reset form (petugas tetap diisi)
-          eJudulBA.value = "";
-          eUsaha.value = "";
-          eInspeksi.value = "";
-          eMetode.value = "";
-          ePetugas.value = localStorage.getItem('petugasTerakhir') || '';
+          // Reset form (kecuali timestamp)
+          eJudulBA.value = '';
+          eUsaha.value = '';
+          eInspeksi.value = '';
+          eMetode.value = '';
+          // Reset semua dropdown petugas ke opsi default
+          container.querySelectorAll('select').forEach(sel => {
+            sel.value = '';
+          });
+          // Pastikan ada minimal 1 baris
+          if (container.children.length === 0) {
+            tambahBarisPetugas();
+          }
         } else {
           throw new Error(result.message || 'Gagal menyimpan');
         }
       } catch (error) {
         resultArea.className = 'result-box bg-danger bg-opacity-10 text-danger';
-        resultStatus.innerText = "✗ Gagal:";
+        resultStatus.innerText = '✗ Gagal:';
         resultDetail.innerText = error.message;
       } finally {
         btn.disabled = false;
@@ -303,7 +402,7 @@
         resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
-    // Registrasi Service Worker untuk PWA (Taruh di paling bawah script)
+// Registrasi Service Worker untuk PWA (Taruh di paling bawah script)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
@@ -311,6 +410,17 @@
           .catch(err => console.error('Service Worker gagal:', err));
       });
     }
+
+// Sembunyikan hasil saat pengguna mengklik/fokus ke kolom isian atau dropdown
+document.getElementById('inspectionForm').addEventListener('focusin', function(e) {
+  // Jika targetnya adalah input, select, atau textarea
+  if (e.target.matches('input, select, textarea')) {
+    const resultArea = document.getElementById('resultArea');
+    if (!resultArea.classList.contains('d-none')) {
+      resultArea.classList.add('d-none');
+    }
+  }
+});
   </script>
 </body>
 </html>
