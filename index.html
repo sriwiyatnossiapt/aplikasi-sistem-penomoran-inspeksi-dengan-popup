@@ -126,9 +126,6 @@
       .burger-btn {
         display: block;
       }
-      /* Saat sidebar terbuka, beri sedikit padding kiri agar konten tidak tertutup */
-      /* Tapi karena sidebar overlay, kita biarkan konten di belakangnya */
-      /* kita akan tambahkan backdrop jika diperlukan, tapi tidak wajib */
     }
 
     /* ===== CARD & FORM ===== */
@@ -216,9 +213,8 @@
       <a href="#" class="nav-link spreadsheet-link" id="navSpreadsheet" onclick="window.open('https://docs.google.com/spreadsheets/d/1zRrJUe2x6nO62HiEKX73mspp_OnCnna4_LgcoUmhSHs/edit?gid=0#gid=0','_blank')">
         <i class="fas fa-table"></i> Buka Spreadsheet
       </a>
-   <!-- Menu Baru: Lihat Renlak -->
-      <a href="#" class="nav-link text-info mt-2" onclick="showRenlakModal(event)"><i class="fas fa-tasks"></i> Lihat Renlak</a>
-      //
+      <!-- Menu Baru: Lihat Renlak (dengan ID) -->
+      <a href="#" class="nav-link text-info mt-2" id="navRenlak"><i class="fas fa-tasks"></i> Lihat Renlak</a>
       <!-- Keterangan Renlak -->
       <div class="renlak-info-box mt-2 p-2 rounded small">
         <i class="fas fa-info-circle me-1"></i> Menampilkan otomatis sarana yang <b>belum diperiksa</b>. Inputan baru akan mengeliminasi sarana dari daftar ini.
@@ -555,6 +551,14 @@
         }
         // Jika link adalah spreadsheet, biarkan buka di tab baru (sudah ada onclick)
       });
+    });
+
+    // ============================
+    //  KHUSUS: LIHAT RENLAK
+    // ============================
+    document.getElementById('navRenlak').addEventListener('click', function(e) {
+      e.preventDefault(); // Mencegah reload
+      alert('Masih dalam tahap pengembangan...');
     });
 
     // Saat resize, atur ulang state
