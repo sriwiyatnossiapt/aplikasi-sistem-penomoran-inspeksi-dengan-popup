@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* ===== CSS (sama seperti sebelumnya) ===== */
     body { background-color: #f0f2f5; overflow-x: hidden; }
     .sidebar { background-color: #1e2a3a; width: 260px; height: 100vh; position: fixed; top: 0; left: 0; padding: 1.5rem 1rem; color: #fff; display: flex; flex-direction: column; transition: transform 0.3s; z-index: 1050; box-shadow: 2px 0 8px rgba(0,0,0,0.15); overflow-y: auto; }
     .sidebar .brand { font-size: 1.25rem; font-weight: 700; border-bottom: 1px solid #3a4a5e; padding-bottom: 0.75rem; margin-bottom: 1.5rem; text-align: center; }
@@ -44,7 +45,6 @@
     .table-renlak th { background-color: #1e2a3a; color: #fff; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
     .filter-group .form-select { min-width: 180px; }
     @media (max-width: 768px) { .filter-group .form-select { min-width: 100%; margin-bottom: 0.5rem; } }
-    /* Gaya untuk baris tabel saat di-hover agar terlihat bisa diklik */
     .table-renlak tbody tr { cursor: pointer; }
     .table-renlak tbody tr:hover { background-color: #e9ecef; }
   </style>
@@ -312,7 +312,7 @@
     }
 
     // ================================================================
-    //  RENDER TABEL (dengan atribut data-sarana untuk double-klik)
+    //  RENDER TABEL
     // ================================================================
     function renderTable(data) {
       const tbody = document.getElementById('renlakTableBody');
@@ -341,7 +341,6 @@
         const petugas = row.petugas || '-';
         const keterangan = row.keterangan || row.nie || row.nomor_batch || '-';
 
-        // Simpan data sarana di atribut data untuk double-klik
         tr.dataset.sarana = sarana;
 
         tr.innerHTML = `
@@ -362,35 +361,28 @@
     }
 
     // ================================================================
-    //  DOUBLE-CLICK PADA BARIS TABEL → ISI FORM
+    //  DOUBLE-CLICK → ISI FORM
     // ================================================================
     document.getElementById('renlakTableBody').addEventListener('dblclick', function(e) {
       const tr = e.target.closest('tr');
       if (!tr) return;
       const sarana = tr.dataset.sarana;
       if (sarana && sarana !== '-') {
-        // Pindah ke halaman form
         showPage('form');
-        // Isi field judul berita acara
         const inputJudul = document.getElementById('judulBeritaAcara');
         inputJudul.value = sarana;
         inputJudul.focus();
-        // Tampilkan notifikasi
         const resultArea = document.getElementById('resultArea');
         resultArea.className = 'result-box bg-info bg-opacity-10 text-info d-block';
         document.getElementById('resultStatus').innerText = '📋 Data siap diisi!';
         document.getElementById('resultDetail').innerText = 'Nama sarana "' + sarana + '" telah diisi ke form.';
-        // Scroll ke form
         document.getElementById('formPage').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Sembunyikan notifikasi setelah 3 detik
-        setTimeout(() => {
-          resultArea.classList.add('d-none');
-        }, 3000);
+        setTimeout(() => { resultArea.classList.add('d-none'); }, 3000);
       }
     });
 
     // ================================================================
-    //  FILTER LOKASI & TANGGAL
+    //  FILTER
     // ================================================================
     function applyFilters() {
       const filterLokasi = document.getElementById('filterLokasi').value;
@@ -427,7 +419,7 @@
     }
 
     // ================================================================
-    //  NAVIGASI & SIDEBAR
+    //  NAVIGASI
     // ================================================================
     const formPage = document.getElementById('formPage');
     const renlakPage = document.getElementById('renlakPage');
@@ -508,7 +500,7 @@
     }
 
     // ================================================================
-    //  FORM SUBMIT & PETUGAS DINAMIS
+    //  FORM SUBMIT + UPDATE TANGGAL DI SUPABASE (berdasarkan match sarana)
     // ================================================================
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxDVEDVT8asXmjBvhYZRAKSLsnrCDyzMj8MgGxg66ZYf7_pAr8kTX5mLQOo4tbjZAO9/exec";
     const DAFTAR_PETUGAS = ['Leni Maryati','Insan Nurul Padjar','Mila Nur Mauludiawati','Fitria Puspawati','Desy Yudiawati','Sufiati','Vinnie','Lusiea','Wenny Warastuti','Nurlaila','Inayah','Santi Nurhayati','Rizqie Noor A','Yanti','Dwi Arun','Ratna Kumalasari','Mimin Siti Aminah','Sari Puspita Dewi','Sri Wiyatno','Aryo Budhi S','Resa Ansi R','Dinny','Evie Prihanita','Euis Sridaryati','Elin','Auliya','Sofy','Sinta'];
@@ -593,9 +585,14 @@
         petugas: petugasGabung
       };
 
+      // Hapus pesan error sebelumnya
+      const existingInfo = resultArea.querySelector('.supabase-info');
+      if (existingInfo) existingInfo.remove();
+
       resultArea.classList.remove('d-none');
 
       try {
+        // 1. Kirim ke Google Apps Script
         const response = await fetch(GAS_WEB_APP_URL, {
           method: 'POST',
           mode: 'cors',
@@ -604,17 +601,84 @@
         });
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const result = await response.json();
+
         if (result.status === 'success') {
           resultArea.className = 'result-box bg-success bg-opacity-10 text-success';
           resultStatus.innerText = '✓ Data Tersimpan!';
           resultDetail.innerText = result.nomor;
+
+          // 2. UPDATE tanggal_realisasi_pelaksanaan di Supabase (berdasarkan match sarana)
+          const sarana = eJudulBA.value.trim();
+          if (sarana) {
+            try {
+              // Cari data dengan sarana yang cocok
+              const { data: existingData, error: findError } = await supabaseClient
+                .from('renlak_sk_2026')
+                .select('no, sarana')
+                .eq('sarana', sarana)
+                .maybeSingle();
+
+              if (findError) {
+                console.error('⚠️ Error mencari data:', findError);
+                throw findError;
+              }
+
+              if (existingData) {
+                // Update tanggal dengan timestamp sekarang
+                const now = new Date().toISOString();
+                const { error: updateError } = await supabaseClient
+                  .from('renlak_sk_2026')
+                  .update({ tgl_realisasi_pelaksanaan: now })
+                  .eq('no', existingData.no);
+
+                if (updateError) {
+                  console.error('⚠️ Gagal update tanggal:', updateError);
+                  // Tampilkan peringatan
+                  const info = document.createElement('p');
+                  info.className = 'text-warning small mt-2 supabase-info';
+                  info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> 
+                    Data tersimpan di Google Sheets, tetapi gagal update tanggal di Supabase. 
+                    Error: ${updateError.message}`;
+                  resultArea.appendChild(info);
+                } else {
+                  console.log('✅ Tanggal realisasi berhasil diupdate untuk sarana:', sarana);
+                  // Refresh tabel renlak jika terbuka
+                  if (document.getElementById('renlakPage').style.display !== 'none') {
+                    loadRenlakData();
+                  }
+                  // Tampilkan konfirmasi sukses
+                  const info = document.createElement('p');
+                  info.className = 'text-success small mt-2 supabase-info';
+                  info.innerHTML = `<i class="fas fa-check-circle me-1"></i> 
+                    Tanggal realisasi "${new Date(now).toLocaleString('id-ID')}" telah diupdate di Supabase.`;
+                  resultArea.appendChild(info);
+                }
+              } else {
+                // Sarana tidak ditemukan di Supabase
+                const info = document.createElement('p');
+                info.className = 'text-warning small mt-2 supabase-info';
+                info.innerHTML = `<i class="fas fa-info-circle me-1"></i> 
+                  Sarana "${sarana}" tidak ditemukan di daftar renlak. Tidak ada update tanggal.`;
+                resultArea.appendChild(info);
+              }
+            } catch (supabaseErr) {
+              console.error('⚠️ Error proses Supabase:', supabaseErr);
+              const info = document.createElement('p');
+              info.className = 'text-danger small mt-2 supabase-info';
+              info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> 
+                Gagal memproses update tanggal di Supabase. Lihat console untuk detail.`;
+              resultArea.appendChild(info);
+            }
+          }
+
+          // Reset form
           eJudulBA.value = '';
           eUsaha.value = '';
           eInspeksi.value = '';
           eMetode.value = '';
           container.querySelectorAll('select').forEach(sel => sel.value = '');
           if (container.children.length === 0) tambahBarisPetugas();
-          if (document.getElementById('renlakPage').style.display !== 'none') loadRenlakData();
+
         } else {
           throw new Error(result.message || 'Gagal menyimpan');
         }
