@@ -44,6 +44,9 @@
     .table-renlak th { background-color: #1e2a3a; color: #fff; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
     .filter-group .form-select { min-width: 180px; }
     @media (max-width: 768px) { .filter-group .form-select { min-width: 100%; margin-bottom: 0.5rem; } }
+    /* Gaya untuk baris tabel saat di-hover agar terlihat bisa diklik */
+    .table-renlak tbody tr { cursor: pointer; }
+    .table-renlak tbody tr:hover { background-color: #e9ecef; }
   </style>
 </head>
 <body>
@@ -159,7 +162,7 @@
           <div class="col-12">
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Renlak SK 2026</h4>
+                <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Daftar Sarana (Renlak)</h4>
                 <button class="btn btn-sm btn-outline-secondary" onclick="loadRenlakData()">
                   <i class="fas fa-sync-alt me-1"></i> Refresh
                 </button>
@@ -183,6 +186,9 @@
                     <button class="btn btn-outline-danger btn-sm w-100" onclick="resetFilters()">
                       <i class="fas fa-undo me-1"></i> Reset
                     </button>
+                  </div>
+                  <div class="col-md-4 text-end text-muted small">
+                    <i class="fas fa-info-circle me-1"></i> Double-klik baris untuk isi form
                   </div>
                 </div>
 
@@ -234,7 +240,7 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_hEemclnJE4NPlTApl8Rz3g_drc3KlEF';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Data dummy (tidak akan dipakai jika koneksi berhasil)
+    // Data dummy
     const DUMMY_DATA = [
       { sarana: 'Apotek Sehat', alamat: 'Jl. Contoh No.1', lokasi: 'Bandung', ranking: 'A', rencana: '-', tgl_realisasi_pelaksanaan: '2026-01-28', petugas: 'Leni', keterangan: 'NIE: SD081534251' },
       { sarana: 'Klinik Pratama', alamat: 'Jl. Sehat No.2', lokasi: 'Jakarta', ranking: 'B', rencana: '-', tgl_realisasi_pelaksanaan: null, petugas: 'Mila', keterangan: '-' }
@@ -242,7 +248,7 @@
     let allData = [];
 
     // ================================================================
-    //  LOAD DATA RENLAK (semua data tanpa limit)
+    //  LOAD DATA RENLAK
     // ================================================================
     async function loadRenlakData() {
       const loading = document.getElementById('renlakLoading');
@@ -289,7 +295,6 @@
         });
         filterLokasi.value = '';
 
-        // Reset filter tanggal ke "Semua"
         document.getElementById('filterTanggal').value = 'all';
 
         renderTable(allData);
@@ -307,7 +312,7 @@
     }
 
     // ================================================================
-    //  RENDER TABEL
+    //  RENDER TABEL (dengan atribut data-sarana untuk double-klik)
     // ================================================================
     function renderTable(data) {
       const tbody = document.getElementById('renlakTableBody');
@@ -336,6 +341,9 @@
         const petugas = row.petugas || '-';
         const keterangan = row.keterangan || row.nie || row.nomor_batch || '-';
 
+        // Simpan data sarana di atribut data untuk double-klik
+        tr.dataset.sarana = sarana;
+
         tr.innerHTML = `
           <td>${index + 1}</td>
           <td>${sarana}</td>
@@ -354,6 +362,34 @@
     }
 
     // ================================================================
+    //  DOUBLE-CLICK PADA BARIS TABEL → ISI FORM
+    // ================================================================
+    document.getElementById('renlakTableBody').addEventListener('dblclick', function(e) {
+      const tr = e.target.closest('tr');
+      if (!tr) return;
+      const sarana = tr.dataset.sarana;
+      if (sarana && sarana !== '-') {
+        // Pindah ke halaman form
+        showPage('form');
+        // Isi field judul berita acara
+        const inputJudul = document.getElementById('judulBeritaAcara');
+        inputJudul.value = sarana;
+        inputJudul.focus();
+        // Tampilkan notifikasi
+        const resultArea = document.getElementById('resultArea');
+        resultArea.className = 'result-box bg-info bg-opacity-10 text-info d-block';
+        document.getElementById('resultStatus').innerText = '📋 Data siap diisi!';
+        document.getElementById('resultDetail').innerText = 'Nama sarana "' + sarana + '" telah diisi ke form.';
+        // Scroll ke form
+        document.getElementById('formPage').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Sembunyikan notifikasi setelah 3 detik
+        setTimeout(() => {
+          resultArea.classList.add('d-none');
+        }, 3000);
+      }
+    });
+
+    // ================================================================
     //  FILTER LOKASI & TANGGAL
     // ================================================================
     function applyFilters() {
@@ -362,7 +398,6 @@
 
       let filtered = allData;
 
-      // Filter lokasi
       if (filterLokasi) {
         filtered = filtered.filter(row => {
           const lokasi = row.lokasi || row.tempat_sampling || '';
@@ -370,7 +405,6 @@
         });
       }
 
-      // Filter tanggal
       if (filterTanggal === 'ada') {
         filtered = filtered.filter(row => {
           const tgl = row.tgl_realisasi_pelaksanaan || row.tanggal_waktu;
@@ -382,7 +416,6 @@
           return !tgl || tgl.trim() === '';
         });
       }
-      // 'all' tidak perlu difilter
 
       renderTable(filtered);
     }
@@ -464,7 +497,7 @@
     }
 
     // ================================================================
-    //  SERVICE WORKER (abaikan error jika lokal)
+    //  SERVICE WORKER
     // ================================================================
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -475,7 +508,7 @@
     }
 
     // ================================================================
-    //  FORM SUBMIT & PETUGAS DINAMIS (tidak diubah)
+    //  FORM SUBMIT & PETUGAS DINAMIS
     // ================================================================
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxDVEDVT8asXmjBvhYZRAKSLsnrCDyzMj8MgGxg66ZYf7_pAr8kTX5mLQOo4tbjZAO9/exec";
     const DAFTAR_PETUGAS = ['Leni Maryati','Insan Nurul Padjar','Mila Nur Mauludiawati','Fitria Puspawati','Desy Yudiawati','Sufiati','Vinnie','Lusiea','Wenny Warastuti','Nurlaila','Inayah','Santi Nurhayati','Rizqie Noor A','Yanti','Dwi Arun','Ratna Kumalasari','Mimin Siti Aminah','Sari Puspita Dewi','Sri Wiyatno','Aryo Budhi S','Resa Ansi R','Dinny','Evie Prihanita','Euis Sridaryati','Elin','Auliya','Sofy','Sinta'];
