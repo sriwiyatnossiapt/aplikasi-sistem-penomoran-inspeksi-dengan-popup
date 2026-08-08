@@ -11,7 +11,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* (CSS sama seperti sebelumnya, disisipkan ringkas agar tidak terlalu panjang) */
     body { background-color: #f0f2f5; overflow-x: hidden; }
     .sidebar { background-color: #1e2a3a; width: 260px; height: 100vh; position: fixed; top: 0; left: 0; padding: 1.5rem 1rem; color: #fff; display: flex; flex-direction: column; transition: transform 0.3s; z-index: 1050; box-shadow: 2px 0 8px rgba(0,0,0,0.15); overflow-y: auto; }
     .sidebar .brand { font-size: 1.25rem; font-weight: 700; border-bottom: 1px solid #3a4a5e; padding-bottom: 0.75rem; margin-bottom: 1.5rem; text-align: center; }
@@ -43,10 +42,8 @@
     #renlakPage { display: none; }
     #renlakPage .table-responsive { max-height: 65vh; overflow-y: auto; }
     .table-renlak th { background-color: #1e2a3a; color: #fff; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
-    .badge-status { font-size: 0.8rem; }
-    .filter-group .form-select { min-width: 200px; }
+    .filter-group .form-select { min-width: 180px; }
     @media (max-width: 768px) { .filter-group .form-select { min-width: 100%; margin-bottom: 0.5rem; } }
-    .data-count { font-size: 0.9rem; color: #6c757d; }
   </style>
 </head>
 <body>
@@ -162,22 +159,24 @@
           <div class="col-12">
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Daftar Sarana (Renlak)</h4>
-                <div>
-                  <button class="btn btn-sm btn-outline-secondary me-2" onclick="loadRenlakData()">
-                    <i class="fas fa-sync-alt me-1"></i> Refresh
-                  </button>
-                  <button class="btn btn-sm btn-outline-info" onclick="testSupabaseConnection()">
-                    <i class="fas fa-plug me-1"></i> Test Koneksi
-                  </button>
-                </div>
+                <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Renlak SK 2026</h4>
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadRenlakData()">
+                  <i class="fas fa-sync-alt me-1"></i> Refresh
+                </button>
               </div>
               <div class="card-body">
-                <!-- FILTER LOKASI -->
+                <!-- FILTER LOKASI & TANGGAL -->
                 <div class="row g-2 mb-3 filter-group">
-                  <div class="col-md-4">
+                  <div class="col-md-3">
                     <select id="filterLokasi" class="form-select" onchange="applyFilters()">
                       <option value="">Semua Lokasi</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <select id="filterTanggal" class="form-select" onchange="applyFilters()">
+                      <option value="all">Semua</option>
+                      <option value="ada">Sudah dilaksanakan</option>
+                      <option value="kosong">Belum dilaksanakan</option>
                     </select>
                   </div>
                   <div class="col-md-2">
@@ -185,7 +184,6 @@
                       <i class="fas fa-undo me-1"></i> Reset
                     </button>
                   </div>
-                  <div class="col-md-6 text-end data-count" id="dataCount"></div>
                 </div>
 
                 <div id="renlakLoading" class="text-center py-4">
@@ -213,7 +211,6 @@
                       <tbody id="renlakTableBody"></tbody>
                     </table>
                   </div>
-                  <p class="text-muted small mt-2" id="tableInfo"><i class="fas fa-info-circle me-1"></i>Data dari Supabase (renlak_sk_2026).</p>
                 </div>
                 <div id="renlakEmpty" style="display:none;" class="text-center py-4">
                   <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
@@ -237,67 +234,50 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_hEemclnJE4NPlTApl8Rz3g_drc3KlEF';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Data dummy (tidak akan dipakai jika koneksi berhasil)
+    const DUMMY_DATA = [
+      { sarana: 'Apotek Sehat', alamat: 'Jl. Contoh No.1', lokasi: 'Bandung', ranking: 'A', rencana: '-', tgl_realisasi_pelaksanaan: '2026-01-28', petugas: 'Leni', keterangan: 'NIE: SD081534251' },
+      { sarana: 'Klinik Pratama', alamat: 'Jl. Sehat No.2', lokasi: 'Jakarta', ranking: 'B', rencana: '-', tgl_realisasi_pelaksanaan: null, petugas: 'Mila', keterangan: '-' }
+    ];
     let allData = [];
-    let usingDummy = false;
 
     // ================================================================
-    //  TEST KONEKSI
-    // ================================================================
-    async function testSupabaseConnection() {
-      try {
-        const { data, error } = await supabaseClient
-          .from('renlak_sk_2026')
-          .select('*')
-          .limit(1);
-        if (error) {
-          alert('❌ Gagal koneksi: ' + error.message);
-        } else {
-          alert('✅ Koneksi berhasil! Data: ' + (data ? data.length : 0) + ' baris.');
-        }
-      } catch (err) {
-        alert('❌ Error: ' + err.message);
-      }
-    }
-
-    // ================================================================
-    //  LOAD DATA
+    //  LOAD DATA RENLAK (semua data tanpa limit)
     // ================================================================
     async function loadRenlakData() {
       const loading = document.getElementById('renlakLoading');
       const tableWrap = document.getElementById('renlakTableWrap');
       const emptyMsg = document.getElementById('renlakEmpty');
-      const dataCount = document.getElementById('dataCount');
 
       loading.style.display = 'block';
       tableWrap.style.display = 'none';
       emptyMsg.style.display = 'none';
-      dataCount.textContent = '';
 
       try {
-        // Ambil semua data (tanpa order untuk menghindari error)
-        const { data, error } = await supabaseClient
+        let { data, error } = await supabaseClient
           .from('renlak_sk_2026')
           .select('*')
-          .limit(100);
+          .order('no', { ascending: false });
 
-        if (error) throw error;
-
-        if (!data || data.length === 0) {
-          // Jika kosong, gunakan dummy
-          usingDummy = true;
-          allData = [];
-          alert('Data kosong, tidak ada data ditampilkan.');
+        if (error) {
+          console.warn('Supabase error:', error.message);
+          allData = DUMMY_DATA;
+          alert('⚠️ Gagal mengambil data dari Supabase:\n' + error.message + '\nMenampilkan data dummy.');
+        } else if (!data || data.length === 0) {
+          allData = DUMMY_DATA;
+          alert('⚠️ Data kosong, menampilkan dummy.');
         } else {
-          usingDummy = false;
           allData = data;
           console.log('✅ Data dari Supabase:', allData.length, 'baris');
-          console.log('Contoh data:', allData[0]);
         }
 
-        // Update filter lokasi
+        // Isi dropdown filter lokasi
         const lokasiSet = new Set();
         allData.forEach(row => {
-          if (row.lokasi) lokasiSet.add(row.lokasi);
+          let lokasi = row.lokasi || row.tempat_sampling;
+          if (lokasi && lokasi.trim() !== '') {
+            lokasiSet.add(lokasi);
+          }
         });
         const filterLokasi = document.getElementById('filterLokasi');
         filterLokasi.innerHTML = '<option value="">Semua Lokasi</option>';
@@ -309,33 +289,25 @@
         });
         filterLokasi.value = '';
 
-        // Render
+        // Reset filter tanggal ke "Semua"
+        document.getElementById('filterTanggal').value = 'all';
+
         renderTable(allData);
         loading.style.display = 'none';
         tableWrap.style.display = 'block';
-
-        const info = document.getElementById('tableInfo');
-        if (usingDummy) {
-          info.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Data dummy (tidak ada data dari Supabase).';
-        } else {
-          info.innerHTML = '<i class="fas fa-check-circle me-1 text-success"></i> Data dari Supabase (renlak_sk_2026) – ' + allData.length + ' baris.';
-        }
-        dataCount.textContent = 'Jumlah data: ' + allData.length;
 
       } catch (err) {
         loading.style.display = 'none';
-        alert('❌ Gagal memuat data: ' + err.message);
+        alert('❌ Error: ' + err.message);
         console.error(err);
-        // Tidak pakai dummy agar error terlihat
-        allData = [];
+        allData = DUMMY_DATA;
         renderTable(allData);
         tableWrap.style.display = 'block';
-        document.getElementById('tableInfo').innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Error: ' + err.message;
       }
     }
 
     // ================================================================
-    //  RENDER TABEL (menggunakan kolom langsung dari Supabase)
+    //  RENDER TABEL
     // ================================================================
     function renderTable(data) {
       const tbody = document.getElementById('renlakTableBody');
@@ -343,36 +315,35 @@
       if (!data || data.length === 0) {
         document.getElementById('renlakEmpty').style.display = 'block';
         document.getElementById('renlakTableWrap').style.display = 'none';
-        document.getElementById('dataCount').textContent = 'Tidak ada data';
         return;
       }
       data.forEach((row, index) => {
         const tr = document.createElement('tr');
-        // Ambil langsung dari kolom yang sesuai
-        const no = row.no || index + 1;
-        const sarana = row.sarana || '-';
+        const sarana = row.sarana || row.nama_produk || '-';
         const alamat = row.alamat || '-';
-        const lokasi = row.lokasi || '-';
-        const ranking = row.ranking || '-';
+        const lokasi = row.lokasi || row.tempat_sampling || '-';
+        const ranking = row.ranking || row.kategori || '-';
         const rencana = row.rencana || '-';
-        let tgl = row.tgl_realisasi_pelaksanaan || '-';
-        if (tgl !== '-') {
+        let tanggal = row.tgl_realisasi_pelaksanaan || row.tanggal_waktu || '-';
+        if (tanggal !== '-' && tanggal !== null && tanggal !== '') {
           try {
-            const d = new Date(tgl);
-            if (!isNaN(d)) tgl = d.toLocaleString('id-ID');
-          } catch (e) { tgl = row.tgl_realisasi_pelaksanaan || '-'; }
+            const d = new Date(tanggal);
+            if (!isNaN(d)) tanggal = d.toLocaleString('id-ID');
+          } catch (e) { /* keep original */ }
+        } else {
+          tanggal = '-';
         }
         const petugas = row.petugas || '-';
-        const keterangan = row.keterangan || '-';
+        const keterangan = row.keterangan || row.nie || row.nomor_batch || '-';
 
         tr.innerHTML = `
-          <td>${no}</td>
+          <td>${index + 1}</td>
           <td>${sarana}</td>
           <td>${alamat}</td>
           <td>${lokasi}</td>
           <td>${ranking}</td>
           <td>${rencana}</td>
-          <td>${tgl}</td>
+          <td>${tanggal}</td>
           <td>${petugas}</td>
           <td>${keterangan}</td>
         `;
@@ -380,23 +351,45 @@
       });
       document.getElementById('renlakEmpty').style.display = 'none';
       document.getElementById('renlakTableWrap').style.display = 'block';
-      document.getElementById('dataCount').textContent = 'Jumlah data: ' + data.length;
     }
 
     // ================================================================
-    //  FILTER
+    //  FILTER LOKASI & TANGGAL
     // ================================================================
     function applyFilters() {
       const filterLokasi = document.getElementById('filterLokasi').value;
+      const filterTanggal = document.getElementById('filterTanggal').value;
+
       let filtered = allData;
+
+      // Filter lokasi
       if (filterLokasi) {
-        filtered = allData.filter(row => (row.lokasi || '') === filterLokasi);
+        filtered = filtered.filter(row => {
+          const lokasi = row.lokasi || row.tempat_sampling || '';
+          return lokasi === filterLokasi;
+        });
       }
+
+      // Filter tanggal
+      if (filterTanggal === 'ada') {
+        filtered = filtered.filter(row => {
+          const tgl = row.tgl_realisasi_pelaksanaan || row.tanggal_waktu;
+          return tgl && tgl.trim() !== '';
+        });
+      } else if (filterTanggal === 'kosong') {
+        filtered = filtered.filter(row => {
+          const tgl = row.tgl_realisasi_pelaksanaan || row.tanggal_waktu;
+          return !tgl || tgl.trim() === '';
+        });
+      }
+      // 'all' tidak perlu difilter
+
       renderTable(filtered);
     }
 
     function resetFilters() {
       document.getElementById('filterLokasi').value = '';
+      document.getElementById('filterTanggal').value = 'all';
       applyFilters();
     }
 
@@ -419,11 +412,8 @@
         renlakPage.style.display = 'block';
         navRenlak.classList.add('active');
         navInput.classList.remove('active');
-        if (allData.length === 0) {
-          loadRenlakData();
-        } else {
-          renderTable(allData);
-        }
+        if (allData.length === 0) loadRenlakData();
+        else renderTable(allData);
       }
     }
 
@@ -474,18 +464,18 @@
     }
 
     // ================================================================
-    //  SERVICE WORKER
+    //  SERVICE WORKER (abaikan error jika lokal)
     // ================================================================
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
           .then(reg => console.log('Service Worker terdaftar!', reg))
-          .catch(err => console.warn('Service Worker tidak terdaftar (file lokal):', err));
+          .catch(err => console.warn('Service Worker tidak terdaftar:', err));
       });
     }
 
     // ================================================================
-    //  FORM SUBMIT & PETUGAS DINAMIS
+    //  FORM SUBMIT & PETUGAS DINAMIS (tidak diubah)
     // ================================================================
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxDVEDVT8asXmjBvhYZRAKSLsnrCDyzMj8MgGxg66ZYf7_pAr8kTX5mLQOo4tbjZAO9/exec";
     const DAFTAR_PETUGAS = ['Leni Maryati','Insan Nurul Padjar','Mila Nur Mauludiawati','Fitria Puspawati','Desy Yudiawati','Sufiati','Vinnie','Lusiea','Wenny Warastuti','Nurlaila','Inayah','Santi Nurhayati','Rizqie Noor A','Yanti','Dwi Arun','Ratna Kumalasari','Mimin Siti Aminah','Sari Puspita Dewi','Sri Wiyatno','Aryo Budhi S','Resa Ansi R','Dinny','Evie Prihanita','Euis Sridaryati','Elin','Auliya','Sofy','Sinta'];
