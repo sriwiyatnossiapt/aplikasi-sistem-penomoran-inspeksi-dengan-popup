@@ -55,7 +55,10 @@
     <div class="brand"><i class="fas fa-clipboard-list me-2"></i>Sistem Penomoran</div>
     <nav class="nav flex-column">
       <a href="#" class="nav-link active" id="navInput" data-page="form"><i class="fas fa-edit"></i> Input Data</a>
-      <a href="#" class="nav-link" id="navRenlak" data-page="renlak"><i class="fas fa-tasks"></i>Renlak distribusi SK</a>
+      <a href="#" class="nav-link" id="navRenlak" data-page="renlak"><i class="fas fa-tasks"></i>Renlak DSK 2026</a>
+      <!-- ===== TAMBAHAN: menu Lihat Renlak OBA ===== -->
+      <a href="#" class="nav-link" id="navRenlakOba"><i class="fas fa-file-alt"></i>Renlak D OBA 2026</a>
+      <!-- ===== END TAMBAHAN ===== -->
       <a href="#" class="nav-link spreadsheet-link" id="navSpreadsheet" onclick="window.open('https://docs.google.com/spreadsheets/d/1zRrJUe2x6nO62HiEKX73mspp_OnCnna4_LgcoUmhSHs/edit?gid=0#gid=0','_blank')">
         <i class="fas fa-table"></i> Buka Spreadsheet
       </a>
@@ -161,7 +164,7 @@
           <div class="col-12">
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Renlak Sarana SK (auto update)</h4>
+                <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Renlak Sarana SK (auto update inputdata)</h4>
                 <button class="btn btn-sm btn-outline-secondary" onclick="loadRenlakData()">
                   <i class="fas fa-sync-alt me-1"></i> Refresh
                 </button>
@@ -423,12 +426,13 @@
     }
 
     // ================================================================
-    //  NAVIGASI
+    //  NAVIGASI (Input Data, Lihat Renlak, Lihat Renlak OBA)
     // ================================================================
     const formPage = document.getElementById('formPage');
     const renlakPage = document.getElementById('renlakPage');
     const navInput = document.getElementById('navInput');
     const navRenlak = document.getElementById('navRenlak');
+    const navRenlakOba = document.getElementById('navRenlakOba'); // TAMBAHAN
 
     function showPage(page) {
       if (page === 'form') {
@@ -436,26 +440,47 @@
         renlakPage.style.display = 'none';
         navInput.classList.add('active');
         navRenlak.classList.remove('active');
+        navRenlakOba.classList.remove('active'); // TAMBAHAN
       } else if (page === 'renlak') {
         formPage.style.display = 'none';
         renlakPage.style.display = 'block';
         navRenlak.classList.add('active');
         navInput.classList.remove('active');
+        navRenlakOba.classList.remove('active'); // TAMBAHAN
         if (allData.length === 0) loadRenlakData();
         else renderTable(allData);
       }
     }
 
+    // Event listener untuk menu Input Data
     navInput.addEventListener('click', function(e) {
       e.preventDefault();
       showPage('form');
       if (window.innerWidth <= 768 && !sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
     });
+
+    // Event listener untuk menu Lihat Renlak
     navRenlak.addEventListener('click', function(e) {
       e.preventDefault();
       showPage('renlak');
       if (window.innerWidth <= 768 && !sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
     });
+
+    // ===== TAMBAHAN: Event listener untuk menu Lihat Renlak OBA =====
+    navRenlakOba.addEventListener('click', function(e) {
+      e.preventDefault();
+      // Saat ini belum menampilkan konten, hanya alert
+      alert('Fitur Lihat Renlak OBA sedang dalam pengembangan.');
+      // Opsional: tutup sidebar di HP
+      if (window.innerWidth <= 768 && !sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
+      // Hapus active dari semua menu agar tidak ada yang tampak aktif
+      navInput.classList.remove('active');
+      navRenlak.classList.remove('active');
+      navRenlakOba.classList.remove('active'); // tidak aktif
+    });
+    // ===== END TAMBAHAN =====
+
+    // Tampilkan form secara default
     showPage('form');
 
     const sidebar = document.getElementById('sidebar');
@@ -599,7 +624,7 @@
                 .maybeSingle();
 
               if (findError) throw findError;
-		if (existingData) {
+              if (existingData) {
                 // Format tanggal YYYY-MM-DD agar ramah tipe data date/timestamp Supabase
                 const todayDate = new Date().toISOString().split('T')[0]; 
 
@@ -632,8 +657,7 @@
                   // Perbarui tampilan tabel Renlak secara otomatis
                   loadRenlakData();
                 }
-              }
-                else {
+              } else {
                 const info = document.createElement('p');
                 info.className = 'text-muted small mt-2 supabase-info';
                 info.innerHTML = `<i class="fas fa-info-circle me-1"></i> Sarana "${sarana}" tidak ditemukan di daftar Renlak.`;
