@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* ===== CSS (sama seperti sebelumnya) ===== */
     body { background-color: #f0f2f5; overflow-x: hidden; }
     .sidebar { background-color: #1e2a3a; width: 260px; height: 100vh; position: fixed; top: 0; left: 0; padding: 1.5rem 1rem; color: #fff; display: flex; flex-direction: column; transition: transform 0.3s; z-index: 1050; box-shadow: 2px 0 8px rgba(0,0,0,0.15); overflow-y: auto; }
     .sidebar .brand { font-size: 1.25rem; font-weight: 700; border-bottom: 1px solid #3a4a5e; padding-bottom: 0.75rem; margin-bottom: 1.5rem; text-align: center; }
@@ -39,8 +40,8 @@
     .petugas-row .btn-remove { flex-shrink: 0; padding: 0.25rem 0.5rem; font-size: 0.8rem; }
     #tambahPetugasBtn { margin-top: 0.5rem; }
     @media (max-width: 576px) { .petugas-row { flex-wrap: wrap; } }
-    #renlakPage { display: none; }
-    #renlakPage .table-responsive { max-height: 65vh; overflow-y: auto; }
+    #renlakPage, #renlakObaPage { display: none; }
+    #renlakPage .table-responsive, #renlakObaPage .table-responsive { max-height: 65vh; overflow-y: auto; }
     .table-renlak th { background-color: #1e2a3a; color: #fff; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
     .filter-group .form-select { min-width: 180px; }
     @media (max-width: 768px) { .filter-group .form-select { min-width: 100%; margin-bottom: 0.5rem; } }
@@ -56,9 +57,7 @@
     <nav class="nav flex-column">
       <a href="#" class="nav-link active" id="navInput" data-page="form"><i class="fas fa-edit"></i> Input Data</a>
       <a href="#" class="nav-link" id="navRenlak" data-page="renlak"><i class="fas fa-tasks"></i>Renlak DSK 2026</a>
-      <!-- ===== TAMBAHAN: menu Lihat Renlak OBA ===== -->
-      <a href="#" class="nav-link" id="navRenlakOba"><i class="fas fa-file-alt"></i>Renlak D OBA 2026</a>
-      <!-- ===== END TAMBAHAN ===== -->
+      <a href="#" class="nav-link" id="navRenlakOba" data-page="renlakOba"><i class="fas fa-file-alt"></i>Renlak D OBA 2026</a>
       <a href="#" class="nav-link spreadsheet-link" id="navSpreadsheet" onclick="window.open('https://docs.google.com/spreadsheets/d/1zRrJUe2x6nO62HiEKX73mspp_OnCnna4_LgcoUmhSHs/edit?gid=0#gid=0','_blank')">
         <i class="fas fa-table"></i> Buka Spreadsheet
       </a>
@@ -92,9 +91,24 @@
                   <div class="row mb-3">
                     <div class="col-12">
                       <label for="judulBeritaAcara" class="form-label">Nama sarana</label>
-                      <input type="text" id="judulBeritaAcara" required placeholder="Masukkan judul berita acara/nama sarana..." class="form-control">
+                      <input type="text" id="judulBeritaAcara" required placeholder="Masukkan nama sarana khusus dsk/doba case sensitive karena untuk update renlak..." class="form-control">
                     </div>
                   </div>
+                  <!-- TAMBAHAN: Dropdown Jenis Data dengan default "Lain-lain" -->
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="jenisData" class="form-label">Jenis Data (untuk update renlak dsk/d-oba, selain itu pilih lain2) </label>
+                      <select id="jenisData" required class="form-select">
+                        <option value="lain" selected>Lain-lain</option>
+                        <option value="SK">SK (Suplemen Kesehatan)</option>
+                        <option value="OBA">OBA (Obat Bahan Alam)</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <!-- kosong, bisa diisi nanti -->
+                    </div>
+                  </div>
+                  <!-- END TAMBAHAN -->
                   <div class="row mb-3">
                     <div class="col-md-6">
                       <label for="jenisUsaha" class="form-label">Jenis Usaha</label>
@@ -158,7 +172,7 @@
         </div>
       </div>
 
-      <!-- RENLAK PAGE -->
+      <!-- RENLAK DSK PAGE -->
       <div id="renlakPage">
         <div class="row">
           <div class="col-12">
@@ -170,7 +184,6 @@
                 </button>
               </div>
               <div class="card-body">
-                <!-- FILTER LOKASI & TANGGAL -->
                 <div class="row g-2 mb-3 filter-group">
                   <div class="col-md-3">
                     <select id="filterLokasi" class="form-select" onchange="applyFilters()">
@@ -230,12 +243,83 @@
         </div>
       </div>
 
+      <!-- RENLAK OBA PAGE -->
+      <div id="renlakObaPage">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="mb-0"><i class="fas fa-file-alt me-2"></i>Renlak Sarana OBA</h4>
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadRenlakObaData()">
+                  <i class="fas fa-sync-alt me-1"></i> Refresh
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="row g-2 mb-3 filter-group">
+                  <div class="col-md-3">
+                    <select id="filterLokasiOba" class="form-select" onchange="applyObaFilters()">
+                      <option value="">Semua Lokasi</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <select id="filterTanggalOba" class="form-select" onchange="applyObaFilters()">
+                      <option value="all">Semua Status</option>
+                      <option value="ada">Sudah dilaksanakan</option>
+                      <option value="kosong">Belum dilaksanakan</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <button class="btn btn-outline-danger btn-sm w-100" onclick="resetObaFilters()">
+                      <i class="fas fa-undo me-1"></i> Reset
+                    </button>
+                  </div>
+                  <div class="col-md-4 text-end text-muted small">
+                    <i class="fas fa-info-circle me-1"></i> Double-klik baris untuk isi form
+                  </div>
+                </div>
+
+                <div id="renlakObaLoading" class="text-center py-4">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p class="mt-2">Memuat data OBA...</p>
+                </div>
+                <div id="renlakObaTableWrap" style="display:none;">
+                  <div class="table-responsive">
+                    <table class="table table-striped table-hover table-renlak" id="renlakObaTable">
+                      <thead>
+                        <tr>
+                          <th>No</th>
+                          <th>Sarana</th>
+                          <th>Alamat</th>
+                          <th>Lokasi</th>
+                          <th>Ranking</th>
+                          <th>Rencana</th>
+                          <th>Tanggal Realisasi Pelaksanaan</th>
+                          <th>Petugas</th>
+                          <th>Keterangan</th>
+                        </tr>
+                      </thead>
+                      <tbody id="renlakObaTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+                <div id="renlakObaEmpty" style="display:none;" class="text-center py-4">
+                  <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                  <p class="text-muted">Belum ada data renlak OBA.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Set Timestamp Otomatis saat dimuat
+    // ===== TIMESTAMP =====
     function updateTimestamp() {
       const now = new Date();
       document.getElementById('timestampInput').value = now.toLocaleString('id-ID');
@@ -248,15 +332,18 @@
     const SUPABASE_URL = 'https://okaegbgupshbtikrsduh.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_hEemclnJE4NPlTApl8Rz3g_drc3KlEF';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const TABLE_SK = 'renlak_sk_2026';     // ganti jika nama tabel SK berbeda
+const TABLE_OBA = 'renlak_ot_2026';    // ganti jika nama tabel OBA berbed
 
     const DUMMY_DATA = [
       { sarana: 'Apotek Sehat', alamat: 'Jl. Contoh No.1', lokasi: 'Bandung', ranking: 'A', rencana: '-', tgl_realisasi_pelaksanaan: '2026-01-28', petugas: 'Leni', keterangan: 'NIE: SD081534251' },
       { sarana: 'Klinik Pratama', alamat: 'Jl. Sehat No.2', lokasi: 'Jakarta', ranking: 'B', rencana: '-', tgl_realisasi_pelaksanaan: null, petugas: 'Mila', keterangan: '-' }
     ];
     let allData = [];
+    let allDataOba = [];
 
     // ================================================================
-    //  LOAD DATA RENLAK
+    //  LOAD DATA DSK
     // ================================================================
     async function loadRenlakData() {
       const loading = document.getElementById('renlakLoading');
@@ -269,7 +356,7 @@
 
       try {
         let { data, error } = await supabaseClient
-          .from('renlak_sk_2026')
+          .from(TABLE_SK)
           .select('*')
           .order('no', { ascending: false });
 
@@ -282,7 +369,7 @@
           alert('⚠️ Data kosong, menampilkan dummy.');
         } else {
           allData = data;
-          console.log('✅ Data dari Supabase:', allData.length, 'baris');
+          console.log('✅ Data DSK dari Supabase:', allData.length, 'baris');
         }
 
         const lokasiSet = new Set();
@@ -319,7 +406,7 @@
     }
 
     // ================================================================
-    //  RENDER TABEL
+    //  RENDER TABEL DSK
     // ================================================================
     function renderTable(data) {
       const tbody = document.getElementById('renlakTableBody');
@@ -368,28 +455,43 @@
     }
 
     // ================================================================
-    //  DOUBLE-CLICK → ISI FORM
+    //  DOUBLE-CLICK → ISI FORM + SET JENIS DATA OTOMATIS
     // ================================================================
-    document.getElementById('renlakTableBody').addEventListener('dblclick', function(e) {
-      const tr = e.target.closest('tr');
-      if (!tr) return;
-      const sarana = tr.dataset.sarana;
-      if (sarana && sarana !== '-') {
-        showPage('form');
-        const inputJudul = document.getElementById('judulBeritaAcara');
-        inputJudul.value = sarana;
-        inputJudul.focus();
-        const resultArea = document.getElementById('resultArea');
-        resultArea.className = 'result-box bg-info bg-opacity-10 text-info d-block';
-        document.getElementById('resultStatus').innerText = '📋 Data siap diisi!';
-        document.getElementById('resultDetail').innerText = 'Nama sarana "' + sarana + '" telah diisi ke form.';
-        document.getElementById('formPage').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => { resultArea.classList.add('d-none'); }, 3000);
-      }
-    });
+    function setupDoubleClick(tableBodyId, jenis) {
+      document.getElementById(tableBodyId).addEventListener('dblclick', function(e) {
+        const tr = e.target.closest('tr');
+        if (!tr) return;
+        const sarana = tr.dataset.sarana;
+        if (sarana && sarana !== '-') {
+          showPage('form');
+          const inputJudul = document.getElementById('judulBeritaAcara');
+          inputJudul.value = sarana;
+          inputJudul.focus();
+
+          // === OTOMATISASI: set dropdown jenis data ===
+          const jenisDataSelect = document.getElementById('jenisData');
+          if (jenis === 'SK') {
+            jenisDataSelect.value = 'SK';
+          } else if (jenis === 'OBA') {
+            jenisDataSelect.value = 'OBA';
+          }
+          // Jika 'lain', tidak diubah (tetap default)
+
+          const resultArea = document.getElementById('resultArea');
+          resultArea.className = 'result-box bg-info bg-opacity-10 text-info d-block';
+          document.getElementById('resultStatus').innerText = '📋 Data siap diisi!';
+          document.getElementById('resultDetail').innerText = 'Nama sarana "' + sarana + '" telah diisi ke form.';
+          document.getElementById('formPage').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => { resultArea.classList.add('d-none'); }, 3000);
+        }
+      });
+    }
+    // Panggil dengan parameter jenis
+    setupDoubleClick('renlakTableBody', 'SK');
+    setupDoubleClick('renlakObaTableBody', 'OBA');
 
     // ================================================================
-    //  FILTER
+    //  FILTER DSK
     // ================================================================
     function applyFilters() {
       const filterLokasi = document.getElementById('filterLokasi').value;
@@ -426,61 +528,210 @@
     }
 
     // ================================================================
-    //  NAVIGASI (Input Data, Lihat Renlak, Lihat Renlak OBA)
+    //  LOAD DATA OBA
     // ================================================================
-    const formPage = document.getElementById('formPage');
-    const renlakPage = document.getElementById('renlakPage');
-    const navInput = document.getElementById('navInput');
-    const navRenlak = document.getElementById('navRenlak');
-    const navRenlakOba = document.getElementById('navRenlakOba'); // TAMBAHAN
+    async function loadRenlakObaData() {
+      const loading = document.getElementById('renlakObaLoading');
+      const tableWrap = document.getElementById('renlakObaTableWrap');
+      const emptyMsg = document.getElementById('renlakObaEmpty');
 
-    function showPage(page) {
-      if (page === 'form') {
-        formPage.style.display = 'block';
-        renlakPage.style.display = 'none';
-        navInput.classList.add('active');
-        navRenlak.classList.remove('active');
-        navRenlakOba.classList.remove('active'); // TAMBAHAN
-      } else if (page === 'renlak') {
-        formPage.style.display = 'none';
-        renlakPage.style.display = 'block';
-        navRenlak.classList.add('active');
-        navInput.classList.remove('active');
-        navRenlakOba.classList.remove('active'); // TAMBAHAN
-        if (allData.length === 0) loadRenlakData();
-        else renderTable(allData);
+      loading.style.display = 'block';
+      tableWrap.style.display = 'none';
+      emptyMsg.style.display = 'none';
+
+      try {
+        let { data, error } = await supabaseClient
+          .from(TABLE_OBA)
+          .select('*')
+          .order('no', { ascending: false });
+
+        if (error) {
+          console.warn('Supabase error (OBA):', error.message);
+          allDataOba = [];
+          alert('⚠️ Gagal mengambil data OBA dari Supabase:\n' + error.message);
+          loading.style.display = 'none';
+          emptyMsg.style.display = 'block';
+          return;
+        } else if (!data || data.length === 0) {
+          allDataOba = [];
+          loading.style.display = 'none';
+          emptyMsg.style.display = 'block';
+          return;
+        } else {
+          allDataOba = data;
+          console.log('✅ Data OBA dari Supabase:', allDataOba.length, 'baris');
+        }
+
+        const lokasiSet = new Set();
+        allDataOba.forEach(row => {
+          let lokasi = row.lokasi || row.tempat_sampling;
+          if (lokasi && lokasi.trim() !== '') {
+            lokasiSet.add(lokasi);
+          }
+        });
+        const filterLokasiOba = document.getElementById('filterLokasiOba');
+        filterLokasiOba.innerHTML = '<option value="">Semua Lokasi</option>';
+        lokasiSet.forEach(l => {
+          const opt = document.createElement('option');
+          opt.value = l;
+          opt.textContent = l;
+          filterLokasiOba.appendChild(opt);
+        });
+        filterLokasiOba.value = '';
+
+        document.getElementById('filterTanggalOba').value = 'all';
+
+        renderObaTable(allDataOba);
+        loading.style.display = 'none';
+        tableWrap.style.display = 'block';
+
+      } catch (err) {
+        loading.style.display = 'none';
+        alert('❌ Error OBA: ' + err.message);
+        console.error(err);
+        allDataOba = [];
+        emptyMsg.style.display = 'block';
       }
     }
 
-    // Event listener untuk menu Input Data
+    // ================================================================
+    //  RENDER TABEL OBA
+    // ================================================================
+    function renderObaTable(data) {
+      const tbody = document.getElementById('renlakObaTableBody');
+      tbody.innerHTML = '';
+      if (!data || data.length === 0) {
+        document.getElementById('renlakObaEmpty').style.display = 'block';
+        document.getElementById('renlakObaTableWrap').style.display = 'none';
+        return;
+      }
+      data.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        const sarana = row.sarana || row.nama_produk || '-';
+        const alamat = row.alamat || '-';
+        const lokasi = row.lokasi || row.tempat_sampling || '-';
+        const ranking = row.ranking || row.kategori || '-';
+        const rencana = row.rencana || '-';
+        let tanggal = row.tgl_realisasi_pelaksanaan || row.tanggal_waktu || '-';
+        if (tanggal !== '-' && tanggal !== null && tanggal !== '') {
+          try {
+            const d = new Date(tanggal);
+            if (!isNaN(d)) tanggal = d.toLocaleString('id-ID');
+          } catch (e) { /* keep original */ }
+        } else {
+          tanggal = '-';
+        }
+        const petugas = row.petugas || '-';
+        const keterangan = row.keterangan || row.nie || row.nomor_batch || '-';
+
+        tr.dataset.sarana = sarana;
+
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${sarana}</td>
+          <td>${alamat}</td>
+          <td>${lokasi}</td>
+          <td>${ranking}</td>
+          <td>${rencana}</td>
+          <td>${tanggal}</td>
+          <td>${petugas}</td>
+          <td>${keterangan}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('renlakObaEmpty').style.display = 'none';
+      document.getElementById('renlakObaTableWrap').style.display = 'block';
+    }
+
+    // ================================================================
+    //  FILTER OBA
+    // ================================================================
+    function applyObaFilters() {
+      const filterLokasi = document.getElementById('filterLokasiOba').value;
+      const filterTanggal = document.getElementById('filterTanggalOba').value;
+
+      let filtered = allDataOba;
+
+      if (filterLokasi) {
+        filtered = filtered.filter(row => {
+          const lokasi = row.lokasi || row.tempat_sampling || '';
+          return lokasi === filterLokasi;
+        });
+      }
+
+      if (filterTanggal === 'ada') {
+        filtered = filtered.filter(row => {
+          const tgl = row.tgl_realisasi_pelaksanaan || row.tanggal_waktu;
+          return tgl && tgl.toString().trim() !== '' && tgl !== '-';
+        });
+      } else if (filterTanggal === 'kosong') {
+        filtered = filtered.filter(row => {
+          const tgl = row.tgl_realisasi_pelaksanaan || row.tanggal_waktu;
+          return !tgl || tgl.toString().trim() === '' || tgl === '-';
+        });
+      }
+
+      renderObaTable(filtered);
+    }
+
+    function resetObaFilters() {
+      document.getElementById('filterLokasiOba').value = '';
+      document.getElementById('filterTanggalOba').value = 'all';
+      applyObaFilters();
+    }
+
+    // ================================================================
+    //  NAVIGASI
+    // ================================================================
+    const formPage = document.getElementById('formPage');
+    const renlakPage = document.getElementById('renlakPage');
+    const renlakObaPage = document.getElementById('renlakObaPage');
+    const navInput = document.getElementById('navInput');
+    const navRenlak = document.getElementById('navRenlak');
+    const navRenlakOba = document.getElementById('navRenlakOba');
+
+    function showPage(page) {
+      formPage.style.display = 'none';
+      renlakPage.style.display = 'none';
+      renlakObaPage.style.display = 'none';
+      navInput.classList.remove('active');
+      navRenlak.classList.remove('active');
+      navRenlakOba.classList.remove('active');
+
+      if (page === 'form') {
+        formPage.style.display = 'block';
+        navInput.classList.add('active');
+      } else if (page === 'renlak') {
+        renlakPage.style.display = 'block';
+        navRenlak.classList.add('active');
+        if (allData.length === 0) loadRenlakData();
+        else renderTable(allData);
+      } else if (page === 'renlakOba') {
+        renlakObaPage.style.display = 'block';
+        navRenlakOba.classList.add('active');
+        if (allDataOba.length === 0) loadRenlakObaData();
+        else renderObaTable(allDataOba);
+      }
+    }
+
     navInput.addEventListener('click', function(e) {
       e.preventDefault();
       showPage('form');
       if (window.innerWidth <= 768 && !sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
     });
 
-    // Event listener untuk menu Lihat Renlak
     navRenlak.addEventListener('click', function(e) {
       e.preventDefault();
       showPage('renlak');
       if (window.innerWidth <= 768 && !sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
     });
 
-    // ===== TAMBAHAN: Event listener untuk menu Lihat Renlak OBA =====
     navRenlakOba.addEventListener('click', function(e) {
       e.preventDefault();
-      // Saat ini belum menampilkan konten, hanya alert
-      alert('Fitur Lihat Renlak OBA sedang dalam pengembangan.');
-      // Opsional: tutup sidebar di HP
+      showPage('renlakOba');
       if (window.innerWidth <= 768 && !sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
-      // Hapus active dari semua menu agar tidak ada yang tampak aktif
-      navInput.classList.remove('active');
-      navRenlak.classList.remove('active');
-      navRenlakOba.classList.remove('active'); // tidak aktif
     });
-    // ===== END TAMBAHAN =====
 
-    // Tampilkan form secara default
     showPage('form');
 
     const sidebar = document.getElementById('sidebar');
@@ -505,7 +756,7 @@
     }
 
     // ================================================================
-    //  FORM SUBMIT + UPDATE TANGGAL DI SUPABASE
+    //  FORM SUBMIT + UPDATE HANYA SATU TABEL (sesuai pilihan, kecuali 'lain')
     // ================================================================
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxDVEDVT8asXmjBvhYZRAKSLsnrCDyzMj8MgGxg66ZYf7_pAr8kTX5mLQOo4tbjZAO9/exec";
     const DAFTAR_PETUGAS = ['Leni Maryati','Insan Nurul Padjar','Mila Nur Mauludiawati','Fitria Puspawati','Desy Yudiawati','Sufiati','Vinnie','Lusiea','Wenny Warastuti','Nurlaila','Inayah','Santi Nurhayati','Rizqie Noor A','Yanti','Dwi Arun','Ratna Kumalasari','Mimin Siti Aminah','Sari Puspita Dewi','Sri Wiyatno','Aryo Budhi S','Resa Ansi R','Dinny','Evie Prihanita','Euis Sridaryati','Elin','Auliya','Sofy','Sinta'];
@@ -553,8 +804,8 @@
 
     async function submitForm(e) {
       e.preventDefault();
-      updateTimestamp(); // perbarui jam pengiriman
-      
+      updateTimestamp();
+
       const btn = document.getElementById('btnSubmit');
       const resultArea = document.getElementById('resultArea');
       const resultStatus = document.getElementById('resultStatus');
@@ -563,6 +814,7 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memproses...';
 
+      // Validasi petugas
       const selects = container.querySelectorAll('select');
       let petugasList = [];
       selects.forEach(sel => { if (sel.value) petugasList.push(sel.value); });
@@ -574,11 +826,17 @@
       }
       const petugasGabung = petugasList.join(', ');
 
+      // Ambil semua nilai form
       const eUsaha = document.getElementById('jenisUsaha');
       const eInspeksi = document.getElementById('jenisInspeksi');
       const eMetode = document.getElementById('metodeInspeksi');
       const eJudulBA = document.getElementById('judulBeritaAcara');
       const eTimestamp = document.getElementById('timestampInput').value;
+      const eJenisData = document.getElementById('jenisData').value; // 'lain', 'SK', atau 'OBA'
+
+      // Validasi: jika jenis data bukan 'lain', wajib pilih SK/OBA? Tidak, kita izinkan semua.
+      // Tapi jika pilih 'lain', maka tidak ada update ke Supabase (hanya ke Google Sheet).
+      // Jika pilih SK/OBA, lakukan update ke tabel yang sesuai.
 
       const payload = {
         timestamp: eTimestamp,
@@ -589,7 +847,8 @@
         jenisInspeksiText: eInspeksi.options[eInspeksi.selectedIndex].text,
         metodeInspeksi: eMetode.value,
         metodeInspeksiText: eMetode.options[eMetode.selectedIndex].text,
-        petugas: petugasGabung
+        petugas: petugasGabung,
+        jenisData: eJenisData // tambahan untuk Google Sheet (opsional)
       };
 
       const existingInfo = resultArea.querySelectorAll('.supabase-info');
@@ -613,64 +872,95 @@
           resultStatus.innerText = '✓ Data Tersimpan!';
           resultDetail.innerText = result.nomor;
 
-          // 2. UPDATE tanggal_realisasi_pelaksanaan di Supabase
           const sarana = eJudulBA.value.trim();
-          if (sarana) {
+          const todayDate = new Date().toISOString().split('T')[0];
+
+          // ============================================================
+          //  UPDATE HANYA JIKA JENIS DATA BUKAN 'lain'
+          // ============================================================
+          if (sarana && eJenisData !== 'lain') {
             try {
-              const { data: existingData, error: findError } = await supabaseClient
-                .from('renlak_sk_2026')
-                .select('no, sarana')
-                .eq('sarana', sarana)
-                .maybeSingle();
+              let tabelTarget = '';
+              let refreshFunction = null;
 
-              if (findError) throw findError;
-              if (existingData) {
-                // Format tanggal YYYY-MM-DD agar ramah tipe data date/timestamp Supabase
-                const todayDate = new Date().toISOString().split('T')[0]; 
+              if (eJenisData === 'SK') {
+                tabelTarget = TABLE_SK;
+                refreshFunction = loadRenlakData;
+              } else if (eJenisData === 'OBA') {
+                tabelTarget = TABLE_OBA;
+                refreshFunction = loadRenlakObaData;
+              }
 
-                const { data: updatedRows, error: updateError } = await supabaseClient
-                  .from('renlak_sk_2026')
-                  .update({ 
-                    tgl_realisasi_pelaksanaan: todayDate,
-                    petugas: petugasGabung
-                  })
-                  .eq('no', existingData.no)
-                  .select(); // Mengembalikan data yang di-update untuk verifikasi
+              if (tabelTarget) {
+                // Cek apakah sarana ada di tabel target
+                const { data: existingData, error: findError } = await supabaseClient
+                  .from(tabelTarget)
+                  .select('no, sarana')
+                  .eq('sarana', sarana)
+                  .maybeSingle();
 
-                if (updateError) {
+                if (findError) {
                   const info = document.createElement('p');
                   info.className = 'text-danger small mt-2 supabase-info';
-                  info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Gagal update Supabase: ${updateError.message}`;
+                  info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Gagal cek data di ${tabelTarget}: ${findError.message}`;
                   resultArea.appendChild(info);
-                } else if (!updatedRows || updatedRows.length === 0) {
-                  // Muncul jika update tertahan RLS (Row Level Security) Supabase
-                  const info = document.createElement('p');
-                  info.className = 'text-warning small mt-2 supabase-info';
-                  info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Perintah terkirim, tetapi 0 baris ter-update. Periksa izin RLS (Row Level Security) di Dashboard Supabase.`;
-                  resultArea.appendChild(info);
+                } else if (existingData) {
+                  const { data: updatedRows, error: updateError } = await supabaseClient
+                    .from(tabelTarget)
+                    .update({ tgl_realisasi_pelaksanaan: todayDate, petugas: petugasGabung })
+                    .eq('no', existingData.no)
+                    .select();
+
+                  if (updateError) {
+                    const info = document.createElement('p');
+                    info.className = 'text-danger small mt-2 supabase-info';
+                    info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Gagal update ${tabelTarget}: ${updateError.message}`;
+                    resultArea.appendChild(info);
+                  } else if (!updatedRows || updatedRows.length === 0) {
+                    const info = document.createElement('p');
+                    info.className = 'text-warning small mt-2 supabase-info';
+                    info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> ${tabelTarget}: 0 baris ter-update (periksa RLS).`;
+                    resultArea.appendChild(info);
+                  } else {
+                    const info = document.createElement('p');
+                    info.className = 'text-success small mt-2 supabase-info';
+                    info.innerHTML = `<i class="fas fa-check-circle me-1"></i> ${tabelTarget}: "${sarana}" diperbarui (${todayDate}).`;
+                    resultArea.appendChild(info);
+                    // Refresh tabel sesuai jenis
+                    if (refreshFunction) refreshFunction();
+                  }
                 } else {
                   const info = document.createElement('p');
-                  info.className = 'text-success small mt-2 supabase-info';
-                  info.innerHTML = `<i class="fas fa-check-circle me-1"></i> Data sarana "${sarana}" berhasil diperbarui di Supabase (Tgl: ${todayDate}).`;
+                  info.className = 'text-muted small mt-2 supabase-info';
+                  info.innerHTML = `<i class="fas fa-info-circle me-1"></i> ${tabelTarget}: "${sarana}" tidak ditemukan.`;
                   resultArea.appendChild(info);
-                  
-                  // Perbarui tampilan tabel Renlak secara otomatis
-                  loadRenlakData();
                 }
-              } else {
-                const info = document.createElement('p');
-                info.className = 'text-muted small mt-2 supabase-info';
-                info.innerHTML = `<i class="fas fa-info-circle me-1"></i> Sarana "${sarana}" tidak ditemukan di daftar Renlak.`;
-                resultArea.appendChild(info);
               }
-            } catch (supabaseErr) {
-              console.error('⚠️ Error proses Supabase:', supabaseErr);
+            } catch (err) {
+              console.error('Update error:', err);
               const info = document.createElement('p');
               info.className = 'text-warning small mt-2 supabase-info';
-              info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Terjadi kesalahan koneksi ke Supabase: ${supabaseErr.message}`;
+              info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Error: ${err.message}`;
               resultArea.appendChild(info);
             }
+          } else if (eJenisData === 'lain') {
+            // Jika 'lain', tidak lakukan update ke Supabase, hanya info
+            const info = document.createElement('p');
+            info.className = 'text-muted small mt-2 supabase-info';
+            info.innerHTML = `<i class="fas fa-info-circle me-1"></i> Data disimpan ke Google Sheet saja (tidak diupdate ke Supabase karena jenis data "Lain-lain").`;
+            resultArea.appendChild(info);
           }
+
+          // Reset form
+          eJudulBA.value = '';
+          eUsaha.value = '';
+          eInspeksi.value = '';
+          eMetode.value = '';
+          // Reset jenis data ke "Lain-lain" (default)
+          document.getElementById('jenisData').value = 'lain';
+          container.querySelectorAll('select').forEach(sel => sel.value = '');
+          if (container.children.length === 0) tambahBarisPetugas();
+
         } else {
           throw new Error(result.message || 'Gagal menyimpan ke Sheet');
         }
