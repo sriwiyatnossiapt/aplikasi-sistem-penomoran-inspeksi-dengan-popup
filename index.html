@@ -9,8 +9,11 @@
   <link rel="apple-touch-icon" href="icon.png">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <!-- SheetJS untuk export Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* ===== CSS (sama seperti sebelumnya) ===== */
     body { background-color: #f0f2f5; overflow-x: hidden; }
     .sidebar { background-color: #1e2a3a; width: 260px; height: 100vh; position: fixed; top: 0; left: 0; padding: 1.5rem 1rem; color: #fff; display: flex; flex-direction: column; transition: transform 0.3s; z-index: 1050; box-shadow: 2px 0 8px rgba(0,0,0,0.15); overflow-y: auto; }
     .sidebar .brand { font-size: 1.25rem; font-weight: 700; border-bottom: 1px solid #3a4a5e; padding-bottom: 0.75rem; margin-bottom: 1.5rem; text-align: center; }
@@ -39,8 +42,9 @@
     .petugas-row .btn-remove { flex-shrink: 0; padding: 0.25rem 0.5rem; font-size: 0.8rem; }
     #tambahPetugasBtn { margin-top: 0.5rem; }
     @media (max-width: 576px) { .petugas-row { flex-wrap: wrap; } }
-    #renlakPage { display: none; }
-    #renlakPage .table-responsive { max-height: 65vh; overflow-y: auto; }
+    /* Halaman */
+    #renlakPage, #renlakObaPage, #riwayatPage { display: none; }
+    #renlakPage .table-responsive, #renlakObaPage .table-responsive, #riwayatPage .table-responsive { max-height: 65vh; overflow-y: auto; }
     .table-renlak th { background-color: #1e2a3a; color: #fff; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
     .filter-group .form-select { min-width: 180px; }
     @media (max-width: 768px) { .filter-group .form-select { min-width: 100%; margin-bottom: 0.5rem; } }
@@ -56,12 +60,9 @@
     <nav class="nav flex-column">
       <a href="#" class="nav-link active" id="navInput" data-page="form"><i class="fas fa-edit"></i> Input Data</a>
       <a href="#" class="nav-link" id="navRenlak" data-page="renlak"><i class="fas fa-tasks"></i>Renlak DSK 2026</a>
-      <!-- ===== TAMBAHAN: menu Lihat Renlak OBA ===== -->
-      <a href="#" class="nav-link" id="navRenlakOba"><i class="fas fa-file-alt"></i>Renlak D OBA 2026</a>
-      <!-- ===== END TAMBAHAN ===== -->
-      <a href="#" class="nav-link spreadsheet-link" id="navSpreadsheet" onclick="window.open('https://docs.google.com/spreadsheets/d/1zRrJUe2x6nO62HiEKX73mspp_OnCnna4_LgcoUmhSHs/edit?gid=0#gid=0','_blank')">
-        <i class="fas fa-table"></i> Buka Spreadsheet
-      </a>
+      <a href="#" class="nav-link" id="navRenlakOba" data-page="renlakOba"><i class="fas fa-file-alt"></i>Renlak D OBA 2026</a>
+      <!-- Menu baru: Riwayat Input -->
+      <a href="#" class="nav-link" id="navRiwayat" data-page="riwayat"><i class="fas fa-history"></i> Riwayat Input</a>
     </nav>
     <div class="footer-text"><i class="fas fa-shield-alt me-1"></i> v1.0</div>
   </div>
@@ -92,7 +93,20 @@
                   <div class="row mb-3">
                     <div class="col-12">
                       <label for="judulBeritaAcara" class="form-label">Nama sarana</label>
-                      <input type="text" id="judulBeritaAcara" required placeholder="Masukkan judul berita acara/nama sarana..." class="form-control">
+                      <input type="text" id="judulBeritaAcara" required placeholder="Nama sarana (case sensitive untuk update renlak)" class="form-control">
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="jenisData" class="form-label">Jenis Data (untuk update renlak)</label>
+                      <select id="jenisData" required class="form-select">
+                        <option value="lain" selected>Lain-lain (tidak update renlak)</option>
+                        <option value="SK">SK (Suplemen Kesehatan)</option>
+                        <option value="OBA">OBA (Obat Bahan Alam)</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <!-- kosong -->
                     </div>
                   </div>
                   <div class="row mb-3">
@@ -158,19 +172,24 @@
         </div>
       </div>
 
-      <!-- RENLAK PAGE -->
+      <!-- RENLAK DSK PAGE -->
       <div id="renlakPage">
         <div class="row">
           <div class="col-12">
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Renlak Sarana SK (auto update)</h4>
-                <button class="btn btn-sm btn-outline-secondary" onclick="loadRenlakData()">
-                  <i class="fas fa-sync-alt me-1"></i> Refresh
-                </button>
+                <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Renlak Sarana SK</h4>
+                <div>
+                  <button class="btn btn-sm btn-success me-2" onclick="exportExcel('DSK')">
+                    <i class="fas fa-file-excel me-1"></i> Export Excel
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary" onclick="loadRenlakData()">
+                    <i class="fas fa-sync-alt me-1"></i> Refresh
+                  </button>
+                </div>
               </div>
               <div class="card-body">
-                <!-- FILTER LOKASI & TANGGAL -->
+                <!-- filter -->
                 <div class="row g-2 mb-3 filter-group">
                   <div class="col-md-3">
                     <select id="filterLokasi" class="form-select" onchange="applyFilters()">
@@ -211,7 +230,7 @@
                           <th>Lokasi</th>
                           <th>Ranking</th>
                           <th>Rencana</th>
-                          <th>Tanggal Realisasi Pelaksanaan</th>
+                          <th>Tanggal Realisasi</th>
                           <th>Petugas</th>
                           <th>Keterangan</th>
                         </tr>
@@ -230,12 +249,158 @@
         </div>
       </div>
 
+      <!-- RENLAK OBA PAGE -->
+      <div id="renlakObaPage">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="mb-0"><i class="fas fa-file-alt me-2"></i>Renlak Sarana OBA</h4>
+                <div>
+                  <button class="btn btn-sm btn-success me-2" onclick="exportExcel('OBA')">
+                    <i class="fas fa-file-excel me-1"></i> Export Excel
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary" onclick="loadRenlakObaData()">
+                    <i class="fas fa-sync-alt me-1"></i> Refresh
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="row g-2 mb-3 filter-group">
+                  <div class="col-md-3">
+                    <select id="filterLokasiOba" class="form-select" onchange="applyObaFilters()">
+                      <option value="">Semua Lokasi</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <select id="filterTanggalOba" class="form-select" onchange="applyObaFilters()">
+                      <option value="all">Semua Status</option>
+                      <option value="ada">Sudah dilaksanakan</option>
+                      <option value="kosong">Belum dilaksanakan</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <button class="btn btn-outline-danger btn-sm w-100" onclick="resetObaFilters()">
+                      <i class="fas fa-undo me-1"></i> Reset
+                    </button>
+                  </div>
+                  <div class="col-md-4 text-end text-muted small">
+                    <i class="fas fa-info-circle me-1"></i> Double-klik baris untuk isi form
+                  </div>
+                </div>
+
+                <div id="renlakObaLoading" class="text-center py-4">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p class="mt-2">Memuat data OBA...</p>
+                </div>
+                <div id="renlakObaTableWrap" style="display:none;">
+                  <div class="table-responsive">
+                    <table class="table table-striped table-hover table-renlak" id="renlakObaTable">
+                      <thead>
+                        <tr>
+                          <th>No</th>
+                          <th>Sarana</th>
+                          <th>Alamat</th>
+                          <th>Lokasi</th>
+                          <th>Ranking</th>
+                          <th>Rencana</th>
+                          <th>Tanggal Realisasi</th>
+                          <th>Petugas</th>
+                          <th>Keterangan</th>
+                        </tr>
+                      </thead>
+                      <tbody id="renlakObaTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+                <div id="renlakObaEmpty" style="display:none;" class="text-center py-4">
+                  <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                  <p class="text-muted">Belum ada data renlak OBA.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- R IWAYAT INPUT PAGE (BARU) -->
+      <div id="riwayatPage">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="mb-0"><i class="fas fa-history me-2"></i>Riwayat Input Inspeksi</h4>
+                <div>
+                  <button class="btn btn-sm btn-success me-2" onclick="exportRiwayatExcel()">
+                    <i class="fas fa-file-excel me-1"></i> Export Excel
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary" onclick="loadRiwayatData()">
+                    <i class="fas fa-sync-alt me-1"></i> Refresh
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="row g-2 mb-3 filter-group">
+                  <div class="col-md-3">
+                    <input type="text" id="filterRiwayatSarana" class="form-control" placeholder="Cari sarana..." oninput="applyRiwayatFilters()">
+                  </div>
+                  <div class="col-md-3">
+                    <input type="date" id="filterRiwayatTanggal" class="form-control" onchange="applyRiwayatFilters()">
+                  </div>
+                  <div class="col-md-2">
+                    <button class="btn btn-outline-danger btn-sm w-100" onclick="resetRiwayatFilters()">
+                      <i class="fas fa-undo me-1"></i> Reset
+                    </button>
+                  </div>
+                  <div class="col-md-4 text-end text-muted small">
+                    <i class="fas fa-info-circle me-1"></i> Data dari tabel generate_nomor
+                  </div>
+                </div>
+
+                <div id="riwayatLoading" class="text-center py-4">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p class="mt-2">Memuat data riwayat...</p>
+                </div>
+                <div id="riwayatTableWrap" style="display:none;">
+                  <div class="table-responsive">
+                    <table class="table table-striped table-hover table-renlak" id="riwayatTable">
+                      <thead>
+                        <tr>
+                          <th>No</th>
+                          <th>Timestamp</th>
+                          <th>Sarana</th>
+                          <th>Jenis Usaha</th>
+                          <th>Jenis Inspeksi</th>
+                          <th>Metode Inspeksi</th>
+                          <th>Nomor Inspeksi</th>
+                          <th>Petugas</th>
+                          <th>Jenis Data</th>
+                        </tr>
+                      </thead>
+                      <tbody id="riwayatTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+                <div id="riwayatEmpty" style="display:none;" class="text-center py-4">
+                  <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                  <p class="text-muted">Belum ada data input.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Set Timestamp Otomatis saat dimuat
+    // ===== TIMESTAMP =====
     function updateTimestamp() {
       const now = new Date();
       document.getElementById('timestampInput').value = now.toLocaleString('id-ID');
@@ -249,16 +414,23 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_hEemclnJE4NPlTApl8Rz3g_drc3KlEF';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Nama tabel
+    const TABLE_SK = 'renlak_sk2_2026';
+    const TABLE_OBA = 'renlak_ot_2026';
+    const TABLE_INSPEKSI = 'generate_nomor2'; // ← nama tabel yang benar
+
     const DUMMY_DATA = [
       { sarana: 'Apotek Sehat', alamat: 'Jl. Contoh No.1', lokasi: 'Bandung', ranking: 'A', rencana: '-', tgl_realisasi_pelaksanaan: '2026-01-28', petugas: 'Leni', keterangan: 'NIE: SD081534251' },
       { sarana: 'Klinik Pratama', alamat: 'Jl. Sehat No.2', lokasi: 'Jakarta', ranking: 'B', rencana: '-', tgl_realisasi_pelaksanaan: null, petugas: 'Mila', keterangan: '-' }
     ];
     let allData = [];
+    let allDataOba = [];
+    let allRiwayat = [];
 
     // ================================================================
-    //  LOAD DATA RENLAK
+    //  LOAD DATA DSK (tidak berubah)
     // ================================================================
-    async function loadRenlakData() {
+   async function loadRenlakData() {
       const loading = document.getElementById('renlakLoading');
       const tableWrap = document.getElementById('renlakTableWrap');
       const emptyMsg = document.getElementById('renlakEmpty');
@@ -269,7 +441,7 @@
 
       try {
         let { data, error } = await supabaseClient
-          .from('renlak_sk_2026')
+          .from(TABLE_SK)
           .select('*')
           .order('no', { ascending: false });
 
@@ -282,7 +454,7 @@
           alert('⚠️ Data kosong, menampilkan dummy.');
         } else {
           allData = data;
-          console.log('✅ Data dari Supabase:', allData.length, 'baris');
+          console.log('✅ Data DSK dari Supabase:', allData.length, 'baris');
         }
 
         const lokasiSet = new Set();
@@ -318,8 +490,9 @@
       }
     }
 
+
     // ================================================================
-    //  RENDER TABEL
+    //  RENDER TABEL DSK (tidak berubah)
     // ================================================================
     function renderTable(data) {
       const tbody = document.getElementById('renlakTableBody');
@@ -368,30 +541,42 @@
     }
 
     // ================================================================
-    //  DOUBLE-CLICK → ISI FORM
+    //  DOUBLE-CLICK (tidak berubah)
     // ================================================================
-    document.getElementById('renlakTableBody').addEventListener('dblclick', function(e) {
-      const tr = e.target.closest('tr');
-      if (!tr) return;
-      const sarana = tr.dataset.sarana;
-      if (sarana && sarana !== '-') {
-        showPage('form');
-        const inputJudul = document.getElementById('judulBeritaAcara');
-        inputJudul.value = sarana;
-        inputJudul.focus();
-        const resultArea = document.getElementById('resultArea');
-        resultArea.className = 'result-box bg-info bg-opacity-10 text-info d-block';
-        document.getElementById('resultStatus').innerText = '📋 Data siap diisi!';
-        document.getElementById('resultDetail').innerText = 'Nama sarana "' + sarana + '" telah diisi ke form.';
-        document.getElementById('formPage').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => { resultArea.classList.add('d-none'); }, 3000);
-      }
-    });
+  function setupDoubleClick(tableBodyId, jenis) {
+      document.getElementById(tableBodyId).addEventListener('dblclick', function(e) {
+        const tr = e.target.closest('tr');
+        if (!tr) return;
+        const sarana = tr.dataset.sarana;
+        if (sarana && sarana !== '-') {
+          showPage('form');
+          const inputJudul = document.getElementById('judulBeritaAcara');
+          inputJudul.value = sarana;
+          inputJudul.focus();
+
+          const jenisDataSelect = document.getElementById('jenisData');
+          if (jenis === 'SK') {
+            jenisDataSelect.value = 'SK';
+          } else if (jenis === 'OBA') {
+            jenisDataSelect.value = 'OBA';
+          }
+
+          const resultArea = document.getElementById('resultArea');
+          resultArea.className = 'result-box bg-info bg-opacity-10 text-info d-block';
+          document.getElementById('resultStatus').innerText = '📋 Data siap diisi!';
+          document.getElementById('resultDetail').innerText = 'Nama sarana "' + sarana + '" telah diisi ke form.';
+          document.getElementById('formPage').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => { resultArea.classList.add('d-none'); }, 3000);
+        }
+      });
+    }
+    setupDoubleClick('renlakTableBody', 'SK');
+    setupDoubleClick('renlakObaTableBody', 'OBA');
 
     // ================================================================
-    //  FILTER
+    //  FILTER DSK (tidak berubah)
     // ================================================================
-    function applyFilters() {
+     function applyFilters() {
       const filterLokasi = document.getElementById('filterLokasi').value;
       const filterTanggal = document.getElementById('filterTanggal').value;
 
@@ -425,62 +610,388 @@
       applyFilters();
     }
 
-    // ================================================================
-    //  NAVIGASI (Input Data, Lihat Renlak, Lihat Renlak OBA)
-    // ================================================================
-    const formPage = document.getElementById('formPage');
-    const renlakPage = document.getElementById('renlakPage');
-    const navInput = document.getElementById('navInput');
-    const navRenlak = document.getElementById('navRenlak');
-    const navRenlakOba = document.getElementById('navRenlakOba'); // TAMBAHAN
 
-    function showPage(page) {
-      if (page === 'form') {
-        formPage.style.display = 'block';
-        renlakPage.style.display = 'none';
-        navInput.classList.add('active');
-        navRenlak.classList.remove('active');
-        navRenlakOba.classList.remove('active'); // TAMBAHAN
-      } else if (page === 'renlak') {
-        formPage.style.display = 'none';
-        renlakPage.style.display = 'block';
-        navRenlak.classList.add('active');
-        navInput.classList.remove('active');
-        navRenlakOba.classList.remove('active'); // TAMBAHAN
-        if (allData.length === 0) loadRenlakData();
-        else renderTable(allData);
+    // ================================================================
+    //  LOAD DATA OBA
+    // ================================================================
+    async function loadRenlakObaData() {
+      const loading = document.getElementById('renlakObaLoading');
+      const tableWrap = document.getElementById('renlakObaTableWrap');
+      const emptyMsg = document.getElementById('renlakObaEmpty');
+
+      loading.style.display = 'block';
+      tableWrap.style.display = 'none';
+      emptyMsg.style.display = 'none';
+
+      try {
+        let { data, error } = await supabaseClient
+          .from(TABLE_OBA)
+          .select('*')
+          .order('no', { ascending: false });
+
+        if (error) {
+          console.warn('Supabase error (OBA):', error.message);
+          allDataOba = [];
+          alert('⚠️ Gagal mengambil data OBA dari Supabase:\n' + error.message);
+          loading.style.display = 'none';
+          emptyMsg.style.display = 'block';
+          return;
+        } else if (!data || data.length === 0) {
+          allDataOba = [];
+          loading.style.display = 'none';
+          emptyMsg.style.display = 'block';
+          return;
+        } else {
+          allDataOba = data;
+          console.log('✅ Data OBA dari Supabase:', allDataOba.length, 'baris');
+        }
+
+        const lokasiSet = new Set();
+        allDataOba.forEach(row => {
+          let lokasi = row.lokasi || row.tempat_sampling;
+          if (lokasi && lokasi.trim() !== '') {
+            lokasiSet.add(lokasi);
+          }
+        });
+        const filterLokasiOba = document.getElementById('filterLokasiOba');
+        filterLokasiOba.innerHTML = '<option value="">Semua Lokasi</option>';
+        lokasiSet.forEach(l => {
+          const opt = document.createElement('option');
+          opt.value = l;
+          opt.textContent = l;
+          filterLokasiOba.appendChild(opt);
+        });
+        filterLokasiOba.value = '';
+
+        document.getElementById('filterTanggalOba').value = 'all';
+
+        renderObaTable(allDataOba);
+        loading.style.display = 'none';
+        tableWrap.style.display = 'block';
+
+      } catch (err) {
+        loading.style.display = 'none';
+        alert('❌ Error OBA: ' + err.message);
+        console.error(err);
+        allDataOba = [];
+        emptyMsg.style.display = 'block';
       }
     }
 
-    // Event listener untuk menu Input Data
+    // ================================================================
+    //  RENDER TABEL OBA
+    // ================================================================
+    function renderObaTable(data) {
+      const tbody = document.getElementById('renlakObaTableBody');
+      tbody.innerHTML = '';
+      if (!data || data.length === 0) {
+        document.getElementById('renlakObaEmpty').style.display = 'block';
+        document.getElementById('renlakObaTableWrap').style.display = 'none';
+        return;
+      }
+      data.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        const sarana = row.sarana || row.nama_produk || '-';
+        const alamat = row.alamat || '-';
+        const lokasi = row.lokasi || row.tempat_sampling || '-';
+        const ranking = row.ranking || row.kategori || '-';
+        const rencana = row.rencana || '-';
+        let tanggal = row.tgl_realisasi_pelaksanaan || row.tanggal_waktu || '-';
+        if (tanggal !== '-' && tanggal !== null && tanggal !== '') {
+          try {
+            const d = new Date(tanggal);
+            if (!isNaN(d)) tanggal = d.toLocaleString('id-ID');
+          } catch (e) { /* keep original */ }
+        } else {
+          tanggal = '-';
+        }
+        const petugas = row.petugas || '-';
+        const keterangan = row.keterangan || row.nie || row.nomor_batch || '-';
+
+        tr.dataset.sarana = sarana;
+
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${sarana}</td>
+          <td>${alamat}</td>
+          <td>${lokasi}</td>
+          <td>${ranking}</td>
+          <td>${rencana}</td>
+          <td>${tanggal}</td>
+          <td>${petugas}</td>
+          <td>${keterangan}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('renlakObaEmpty').style.display = 'none';
+      document.getElementById('renlakObaTableWrap').style.display = 'block';
+    }
+
+    // ================================================================
+    //  FILTER OBA
+    // ================================================================
+    function applyObaFilters() {
+      const filterLokasi = document.getElementById('filterLokasiOba').value;
+      const filterTanggal = document.getElementById('filterTanggalOba').value;
+
+      let filtered = allDataOba;
+
+      if (filterLokasi) {
+        filtered = filtered.filter(row => {
+          const lokasi = row.lokasi || row.tempat_sampling || '';
+          return lokasi === filterLokasi;
+        });
+      }
+
+      if (filterTanggal === 'ada') {
+        filtered = filtered.filter(row => {
+          const tgl = row.tgl_realisasi_pelaksanaan || row.tanggal_waktu;
+          return tgl && tgl.toString().trim() !== '' && tgl !== '-';
+        });
+      } else if (filterTanggal === 'kosong') {
+        filtered = filtered.filter(row => {
+          const tgl = row.tgl_realisasi_pelaksanaan || row.tanggal_waktu;
+          return !tgl || tgl.toString().trim() === '' || tgl === '-';
+        });
+      }
+
+      renderObaTable(filtered);
+    }
+
+    function resetObaFilters() {
+      document.getElementById('filterLokasiOba').value = '';
+      document.getElementById('filterTanggalOba').value = 'all';
+      applyObaFilters();
+    }
+
+
+    // ================================================================
+    //  LOAD DATA RIWAYAT (generate_nomor)
+    // ================================================================
+  async function loadRiwayatData() {
+  const loading = document.getElementById('riwayatLoading');
+  const tableWrap = document.getElementById('riwayatTableWrap');
+  const emptyMsg = document.getElementById('riwayatEmpty');
+
+  loading.style.display = 'block';
+  tableWrap.style.display = 'none';
+  emptyMsg.style.display = 'none';
+
+  try {
+    const { data, error } = await supabaseClient
+      .from(TABLE_INSPEKSI)
+      .select('*')
+      .order('no', { ascending: false });
+
+    if (error) {
+      console.warn('Supabase error (riwayat):', error.message);
+      allRiwayat = [];
+      alert('⚠️ Gagal mengambil data riwayat:\n' + error.message);
+      loading.style.display = 'none';
+      emptyMsg.style.display = 'block';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      allRiwayat = [];
+      loading.style.display = 'none';
+      emptyMsg.style.display = 'block';
+      return;
+    }
+
+    // === SORTING MANUAL di JavaScript ===
+    allRiwayat = data.sort((a, b) => {
+      // Ubah format DD/MM/YYYY ke Date untuk sorting
+      const parseDate = (str) => {
+        if (!str) return new Date(0); // null dianggap paling lama
+        // Coba format ISO dulu
+        let d = new Date(str);
+        if (!isNaN(d)) return d;
+        // Jika gagal, coba DD/MM/YYYY
+        const parts = str.split(' ')[0].split('/');
+        if (parts.length === 3) {
+          // asumsi DD/MM/YYYY
+          return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        }
+        return new Date(0);
+      };
+      const dateA = parseDate(a.timestamp);
+      const dateB = parseDate(b.timestamp);
+      return dateB - dateA; // descending (terbaru di atas)
+    });
+
+    console.log('✅ Data riwayat:', allRiwayat.length, 'baris');
+
+    renderRiwayatTable(allRiwayat);
+    loading.style.display = 'none';
+    tableWrap.style.display = 'block';
+
+  } catch (err) {
+    loading.style.display = 'none';
+    alert('❌ Error riwayat: ' + err.message);
+    console.error(err);
+    allRiwayat = [];
+    emptyMsg.style.display = 'block';
+  }
+}
+
+  // ================================================================
+    //  RENDER TABEL RIWAYAT
+    // ================================================================
+    function renderRiwayatTable(data) {
+      const tbody = document.getElementById('riwayatTableBody');
+      tbody.innerHTML = '';
+      if (!data || data.length === 0) {
+        document.getElementById('riwayatEmpty').style.display = 'block';
+        document.getElementById('riwayatTableWrap').style.display = 'none';
+        return;
+      }
+      data.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${row.timestamp || '-'}</td>
+          <td>${row.sarana || '-'}</td>
+          <td>${row.jenis_usaha || '-'}</td>
+          <td>${row.jenis_inspeksi || '-'}</td>
+          <td>${row.metode_inspeksi || '-'}</td>
+          <td><strong>${row.nomor_inspeksi || '-'}</strong></td>
+          <td>${row.petugas || '-'}</td>
+          <td>${row.jenis_data || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('riwayatEmpty').style.display = 'none';
+      document.getElementById('riwayatTableWrap').style.display = 'block';
+    }
+
+    // ================================================================
+    //  FILTER RIWAYAT
+    // ================================================================
+    function applyRiwayatFilters() {
+      const filterSarana = document.getElementById('filterRiwayatSarana').value.toLowerCase().trim();
+      const filterTanggal = document.getElementById('filterRiwayatTanggal').value;
+
+      let filtered = allRiwayat;
+
+      if (filterSarana) {
+        filtered = filtered.filter(row => (row.sarana || '').toLowerCase().includes(filterSarana));
+      }
+      if (filterTanggal) {
+        filtered = filtered.filter(row => {
+          if (!row.timestamp) return false;
+          // timestamp format "DD/MM/YYYY HH:mm" atau "YYYY-MM-DDTHH:mm"
+          const datePart = row.timestamp.split(' ')[0] || row.timestamp.split('T')[0];
+          return datePart === filterTanggal;
+        });
+      }
+
+      renderRiwayatTable(filtered);
+    }
+
+    function resetRiwayatFilters() {
+      document.getElementById('filterRiwayatSarana').value = '';
+      document.getElementById('filterRiwayatTanggal').value = '';
+      applyRiwayatFilters();
+    }
+
+    // ================================================================
+    //  EXPORT RIWAYAT EXCEL
+    // ================================================================
+    function exportRiwayatExcel() {
+      const data = allRiwayat;
+      if (!data || data.length === 0) {
+        alert('Tidak ada data riwayat untuk diekspor!');
+        return;
+      }
+
+      const headers = ['No', 'Timestamp', 'Sarana', 'Jenis Usaha', 'Jenis Inspeksi', 'Metode Inspeksi', 'Nomor Inspeksi', 'Petugas', 'Jenis Data'];
+      const rows = data.map((row, index) => [
+        index + 1,
+        row.timestamp || '-',
+        row.sarana || '-',
+        row.jenis_usaha || '-',
+        row.jenis_inspeksi || '-',
+        row.metode_inspeksi || '-',
+        row.nomor_inspeksi || '-',
+        row.petugas || '-',
+        row.jenis_data || '-'
+      ]);
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      XLSX.utils.book_append_sheet(wb, ws, 'Riwayat Input');
+      const fullName = `Riwayat_Input_${new Date().toISOString().slice(0,10)}.xlsx`;
+      XLSX.writeFile(wb, fullName);
+    }
+
+    // ================================================================
+    //  NAVIGASI (tambah riwayat)
+    // ================================================================
+    const formPage = document.getElementById('formPage');
+    const renlakPage = document.getElementById('renlakPage');
+    const renlakObaPage = document.getElementById('renlakObaPage');
+    const riwayatPage = document.getElementById('riwayatPage');
+    const navInput = document.getElementById('navInput');
+    const navRenlak = document.getElementById('navRenlak');
+    const navRenlakOba = document.getElementById('navRenlakOba');
+    const navRiwayat = document.getElementById('navRiwayat');
+
+    function showPage(page) {
+      formPage.style.display = 'none';
+      renlakPage.style.display = 'none';
+      renlakObaPage.style.display = 'none';
+      riwayatPage.style.display = 'none';
+      navInput.classList.remove('active');
+      navRenlak.classList.remove('active');
+      navRenlakOba.classList.remove('active');
+      navRiwayat.classList.remove('active');
+
+      if (page === 'form') {
+        formPage.style.display = 'block';
+        navInput.classList.add('active');
+      } else if (page === 'renlak') {
+        renlakPage.style.display = 'block';
+        navRenlak.classList.add('active');
+        if (allData.length === 0) loadRenlakData();
+        else renderTable(allData);
+      } else if (page === 'renlakOba') {
+        renlakObaPage.style.display = 'block';
+        navRenlakOba.classList.add('active');
+        if (allDataOba.length === 0) loadRenlakObaData();
+        else renderObaTable(allDataOba);
+      } else if (page === 'riwayat') {
+        riwayatPage.style.display = 'block';
+        navRiwayat.classList.add('active');
+        if (allRiwayat.length === 0) loadRiwayatData();
+        else renderRiwayatTable(allRiwayat);
+      }
+    }
+
     navInput.addEventListener('click', function(e) {
       e.preventDefault();
       showPage('form');
       if (window.innerWidth <= 768 && !sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
     });
 
-    // Event listener untuk menu Lihat Renlak
     navRenlak.addEventListener('click', function(e) {
       e.preventDefault();
       showPage('renlak');
       if (window.innerWidth <= 768 && !sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
     });
 
-    // ===== TAMBAHAN: Event listener untuk menu Lihat Renlak OBA =====
     navRenlakOba.addEventListener('click', function(e) {
       e.preventDefault();
-      // Saat ini belum menampilkan konten, hanya alert
-      alert('Fitur Lihat Renlak OBA sedang dalam pengembangan.');
-      // Opsional: tutup sidebar di HP
+      showPage('renlakOba');
       if (window.innerWidth <= 768 && !sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
-      // Hapus active dari semua menu agar tidak ada yang tampak aktif
-      navInput.classList.remove('active');
-      navRenlak.classList.remove('active');
-      navRenlakOba.classList.remove('active'); // tidak aktif
     });
-    // ===== END TAMBAHAN =====
 
-    // Tampilkan form secara default
+    navRiwayat.addEventListener('click', function(e) {
+      e.preventDefault();
+      showPage('riwayat');
+      if (window.innerWidth <= 768 && !sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
+    });
+
     showPage('form');
 
     const sidebar = document.getElementById('sidebar');
@@ -505,9 +1016,51 @@
     }
 
     // ================================================================
-    //  FORM SUBMIT + UPDATE TANGGAL DI SUPABASE
+    //  EXPORT EXCEL (DSK/OBA) – tidak berubah
     // ================================================================
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxDVEDVT8asXmjBvhYZRAKSLsnrCDyzMj8MgGxg66ZYf7_pAr8kTX5mLQOo4tbjZAO9/exec";
+    function exportExcel(jenis) {
+      let data = [];
+      let fileName = '';
+      let headers = ['No', 'Sarana', 'Alamat', 'Lokasi', 'Ranking', 'Rencana', 'Tanggal Realisasi', 'Petugas', 'Keterangan'];
+
+      if (jenis === 'DSK') {
+        data = allData;
+        fileName = 'Renlak_DSK';
+      } else if (jenis === 'OBA') {
+        data = allDataOba;
+        fileName = 'Renlak_OBA';
+      } else {
+        alert('Jenis tidak dikenali!');
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        alert('Tidak ada data untuk diekspor!');
+        return;
+      }
+
+      const rows = data.map((row, index) => [
+        index + 1,
+        row.sarana || row.nama_produk || '-',
+        row.alamat || '-',
+        row.lokasi || row.tempat_sampling || '-',
+        row.ranking || row.kategori || '-',
+        row.rencana || '-',
+        row.tgl_realisasi_pelaksanaan || row.tanggal_waktu || '-',
+        row.petugas || '-',
+        row.keterangan || row.nie || row.nomor_batch || '-'
+      ]);
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+      const fullName = `${fileName}_${new Date().toISOString().slice(0,10)}.xlsx`;
+      XLSX.writeFile(wb, fullName);
+    }
+
+    // ================================================================
+    //  FORM SUBMIT (perbaiki nama tabel)
+    // ================================================================
     const DAFTAR_PETUGAS = ['Leni Maryati','Insan Nurul Padjar','Mila Nur Mauludiawati','Fitria Puspawati','Desy Yudiawati','Sufiati','Vinnie','Lusiea','Wenny Warastuti','Nurlaila','Inayah','Santi Nurhayati','Rizqie Noor A','Yanti','Dwi Arun','Ratna Kumalasari','Mimin Siti Aminah','Sari Puspita Dewi','Sri Wiyatno','Aryo Budhi S','Resa Ansi R','Dinny','Evie Prihanita','Euis Sridaryati','Elin','Auliya','Sofy','Sinta'];
     const container = document.getElementById('petugas-container');
     const tambahBtn = document.getElementById('tambahPetugasBtn');
@@ -553,8 +1106,8 @@
 
     async function submitForm(e) {
       e.preventDefault();
-      updateTimestamp(); // perbarui jam pengiriman
-      
+      updateTimestamp();
+
       const btn = document.getElementById('btnSubmit');
       const resultArea = document.getElementById('resultArea');
       const resultStatus = document.getElementById('resultStatus');
@@ -579,101 +1132,137 @@
       const eMetode = document.getElementById('metodeInspeksi');
       const eJudulBA = document.getElementById('judulBeritaAcara');
       const eTimestamp = document.getElementById('timestampInput').value;
-
-      const payload = {
-        timestamp: eTimestamp,
-        judulBeritaAcara: eJudulBA.value,
-        jenisUsaha: eUsaha.value,
-        jenisUsahaText: eUsaha.options[eUsaha.selectedIndex].text,
-        jenisInspeksi: eInspeksi.value,
-        jenisInspeksiText: eInspeksi.options[eInspeksi.selectedIndex].text,
-        metodeInspeksi: eMetode.value,
-        metodeInspeksiText: eMetode.options[eMetode.selectedIndex].text,
-        petugas: petugasGabung
-      };
+      const eJenisData = document.getElementById('jenisData').value;
 
       const existingInfo = resultArea.querySelectorAll('.supabase-info');
       existingInfo.forEach(el => el.remove());
-
       resultArea.classList.remove('d-none');
 
       try {
-        // 1. Kirim ke Google Apps Script
-        const response = await fetch(GAS_WEB_APP_URL, {
-          method: 'POST',
-          mode: 'cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify(payload)
-        });
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-        const result = await response.json();
+        // Generate nomor inspeksi
+        const now = new Date();
+        const tahun = now.getFullYear().toString().slice(-2);
+        const bulan = String(now.getMonth() + 1).padStart(2, '0');
 
-        if (result.status === 'success') {
-          resultArea.className = 'result-box bg-success bg-opacity-10 text-success';
-          resultStatus.innerText = '✓ Data Tersimpan!';
-          resultDetail.innerText = result.nomor;
+        const { data: lastData, error: lastError } = await supabaseClient
+          .from(TABLE_INSPEKSI)
+          .select('nomor_inspeksi')
+          .order('no', { ascending: false })
+          .limit(1);
 
-          // 2. UPDATE tanggal_realisasi_pelaksanaan di Supabase
-          const sarana = eJudulBA.value.trim();
-          if (sarana) {
-            try {
-              const { data: existingData, error: findError } = await supabaseClient
-                .from('renlak_sk_2026')
-                .select('no, sarana')
-                .eq('sarana', sarana)
-                .maybeSingle();
+        let nomorUrut = 1;
+        if (!lastError && lastData && lastData.length > 0) {
+          const lastNomor = lastData[0].nomor_inspeksi;
+          if (lastNomor) {
+            const parts = lastNomor.split('.');
+            const lastSeq = parts[parts.length - 1];
+            if (!isNaN(parseInt(lastSeq))) {
+              nomorUrut = parseInt(lastSeq) + 1;
+            }
+          }
+        }
+        const nomorUrutFormat = String(nomorUrut).padStart(3, '0');
+        const nomorInspeksi = `${tahun}.${bulan}.${eUsaha.value}.${eInspeksi.value}.${eMetode.value}.25B.${nomorUrutFormat}`;
 
-              if (findError) throw findError;
-              if (existingData) {
-                // Format tanggal YYYY-MM-DD agar ramah tipe data date/timestamp Supabase
-                const todayDate = new Date().toISOString().split('T')[0]; 
+        // Simpan ke generate_nomor
+        const { error: insertError } = await supabaseClient
+          .from(TABLE_INSPEKSI)
+          .insert([{
+            timestamp: eTimestamp,
+            sarana: eJudulBA.value,
+            jenis_usaha: eUsaha.value,
+            jenis_inspeksi: eInspeksi.value,
+            metode_inspeksi: eMetode.value,
+            nomor_inspeksi: nomorInspeksi,
+            petugas: petugasGabung,
+            jenis_data: eJenisData
+          }]);
 
-                const { data: updatedRows, error: updateError } = await supabaseClient
-                  .from('renlak_sk_2026')
-                  .update({ 
-                    tgl_realisasi_pelaksanaan: todayDate,
-                    petugas: petugasGabung
-                  })
-                  .eq('no', existingData.no)
-                  .select(); // Mengembalikan data yang di-update untuk verifikasi
+        if (insertError) {
+          if (insertError.code === '42P01') {
+            throw new Error('Tabel generate_nomor belum dibuat. Silakan buat tabel terlebih dahulu di Supabase.');
+          }
+          throw insertError;
+        }
 
-                if (updateError) {
-                  const info = document.createElement('p');
-                  info.className = 'text-danger small mt-2 supabase-info';
-                  info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Gagal update Supabase: ${updateError.message}`;
-                  resultArea.appendChild(info);
-                } else if (!updatedRows || updatedRows.length === 0) {
-                  // Muncul jika update tertahan RLS (Row Level Security) Supabase
-                  const info = document.createElement('p');
-                  info.className = 'text-warning small mt-2 supabase-info';
-                  info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Perintah terkirim, tetapi 0 baris ter-update. Periksa izin RLS (Row Level Security) di Dashboard Supabase.`;
-                  resultArea.appendChild(info);
-                } else {
-                  const info = document.createElement('p');
-                  info.className = 'text-success small mt-2 supabase-info';
-                  info.innerHTML = `<i class="fas fa-check-circle me-1"></i> Data sarana "${sarana}" berhasil diperbarui di Supabase (Tgl: ${todayDate}).`;
-                  resultArea.appendChild(info);
-                  
-                  // Perbarui tampilan tabel Renlak secara otomatis
-                  loadRenlakData();
-                }
+        // Update renlak (SK/OBA) – sama seperti sebelumnya
+        const sarana = eJudulBA.value.trim();
+        const todayDate = new Date().toISOString().split('T')[0];
+
+        if (sarana && eJenisData !== 'lain') {
+          let tabelTarget = '';
+          let refreshFunction = null;
+
+          if (eJenisData === 'SK') {
+            tabelTarget = TABLE_SK;
+            refreshFunction = loadRenlakData;
+          } else if (eJenisData === 'OBA') {
+            tabelTarget = TABLE_OBA;
+            refreshFunction = loadRenlakObaData;
+          }
+
+          if (tabelTarget) {
+            const { data: existingData, error: findError } = await supabaseClient
+              .from(tabelTarget)
+              .select('no, sarana')
+              .eq('sarana', sarana)
+              .maybeSingle();
+
+            if (findError) {
+              const info = document.createElement('p');
+              info.className = 'text-danger small mt-2 supabase-info';
+              info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Gagal cek data di ${tabelTarget}: ${findError.message}`;
+              resultArea.appendChild(info);
+            } else if (existingData) {
+              const { data: updatedRows, error: updateError } = await supabaseClient
+                .from(tabelTarget)
+                .update({ tgl_realisasi_pelaksanaan: todayDate, petugas: petugasGabung })
+                .eq('no', existingData.no)
+                .select();
+
+              if (updateError) {
+                const info = document.createElement('p');
+                info.className = 'text-danger small mt-2 supabase-info';
+                info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Gagal update ${tabelTarget}: ${updateError.message}`;
+                resultArea.appendChild(info);
+              } else if (!updatedRows || updatedRows.length === 0) {
+                const info = document.createElement('p');
+                info.className = 'text-warning small mt-2 supabase-info';
+                info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> ${tabelTarget}: 0 baris ter-update (periksa RLS).`;
+                resultArea.appendChild(info);
               } else {
                 const info = document.createElement('p');
-                info.className = 'text-muted small mt-2 supabase-info';
-                info.innerHTML = `<i class="fas fa-info-circle me-1"></i> Sarana "${sarana}" tidak ditemukan di daftar Renlak.`;
+                info.className = 'text-success small mt-2 supabase-info';
+                info.innerHTML = `<i class="fas fa-check-circle me-1"></i> ${tabelTarget}: "${sarana}" diperbarui (${todayDate}).`;
                 resultArea.appendChild(info);
+                if (refreshFunction) refreshFunction();
               }
-            } catch (supabaseErr) {
-              console.error('⚠️ Error proses Supabase:', supabaseErr);
+            } else {
               const info = document.createElement('p');
-              info.className = 'text-warning small mt-2 supabase-info';
-              info.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Terjadi kesalahan koneksi ke Supabase: ${supabaseErr.message}`;
+              info.className = 'text-muted small mt-2 supabase-info';
+              info.innerHTML = `<i class="fas fa-info-circle me-1"></i> ${tabelTarget}: "${sarana}" tidak ditemukan.`;
               resultArea.appendChild(info);
             }
           }
-        } else {
-          throw new Error(result.message || 'Gagal menyimpan ke Sheet');
+        } else if (eJenisData === 'lain') {
+          const info = document.createElement('p');
+          info.className = 'text-muted small mt-2 supabase-info';
+          info.innerHTML = `<i class="fas fa-info-circle me-1"></i> Data disimpan ke Supabase (tidak update renlak).`;
+          resultArea.appendChild(info);
         }
+
+        resultArea.className = 'result-box bg-success bg-opacity-10 text-success';
+        resultStatus.innerText = '✓ Data Tersimpan!';
+        resultDetail.innerText = nomorInspeksi;
+
+        eJudulBA.value = '';
+        eUsaha.value = '';
+        eInspeksi.value = '';
+        eMetode.value = '';
+        document.getElementById('jenisData').value = 'lain';
+        container.querySelectorAll('select').forEach(sel => sel.value = '');
+        if (container.children.length === 0) tambahBarisPetugas();
+
       } catch (err) {
         console.error('⚠️ Error submit form:', err);
         resultArea.className = 'result-box bg-danger bg-opacity-10 text-danger';
