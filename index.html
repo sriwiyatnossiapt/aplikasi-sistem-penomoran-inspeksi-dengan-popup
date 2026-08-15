@@ -877,25 +877,25 @@ async function loadRiwayatData() {
     // ================================================================
     //  FILTER RIWAYAT
     // ================================================================
-    function applyRiwayatFilters() {
-      const filterSarana = document.getElementById('filterRiwayatSarana').value.toLowerCase().trim();
-      const filterTanggal = document.getElementById('filterRiwayatTanggal').value;
+ // ================================================================
+//  FILTER RIWAYAT
+// ================================================================
+function applyRiwayatFilters() {
+  const filterSarana = document.getElementById('filterRiwayatSarana').value.toLowerCase().trim();
 
-      let filtered = allRiwayat;
+  let filtered = allRiwayat;
 
-      if (filterSarana) {
-        filtered = filtered.filter(row => (row.sarana || '').toLowerCase().includes(filterSarana));
-      }
-    
-      renderRiwayatTable(filtered);
-    }
+  if (filterSarana) {
+    filtered = filtered.filter(row => (row.sarana || '').toLowerCase().includes(filterSarana));
+  }
 
-    function resetRiwayatFilters() {
-      document.getElementById('filterRiwayatSarana').value = '';
-      document.getElementById('filterRiwayatTanggal').value = '';
-      applyRiwayatFilters();
-    }
+  renderRiwayatTable(filtered);
+}
 
+function resetRiwayatFilters() {
+  document.getElementById('filterRiwayatSarana').value = '';
+  applyRiwayatFilters();
+}
     // ================================================================
     //  EXPORT RIWAYAT EXCEL
     // ================================================================
