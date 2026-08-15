@@ -61,8 +61,10 @@
       <a href="#" class="nav-link active" id="navInput" data-page="form"><i class="fas fa-edit"></i> Input Data</a>
       <a href="#" class="nav-link" id="navRenlak" data-page="renlak"><i class="fas fa-tasks"></i>Renlak DSK 2026</a>
       <a href="#" class="nav-link" id="navRenlakOba" data-page="renlakOba"><i class="fas fa-file-alt"></i>Renlak D OBA 2026</a>
-      <!-- Menu baru: Riwayat Input -->
-      <a href="#" class="nav-link" id="navRiwayat" data-page="riwayat"><i class="fas fa-history"></i> Riwayat Input</a>
+            <a href="#" class="nav-link" id="navRiwayat" data-page="riwayat"><i class="fas fa-history"></i> Riwayat Input</a>
+<a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#aboutModal">
+  <i class="fas fa-info-circle"></i> Tentang Aplikasi
+</a>
     </nav>
     <div class="footer-text"><i class="fas fa-shield-alt me-1"></i> v1.0</div>
   </div>
@@ -392,6 +394,38 @@
 
     </div>
   </div>
+<!-- Modal Tentang Aplikasi -->
+<div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="aboutModalLabel"><i class="fas fa-info-circle me-2"></i>Tentang Aplikasi</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <h5>Sistem Penomoran Inspeksi (SINOM)</h5>
+        <p><strong>Versi:</strong> 1.0.0</p>
+        <p><strong>oleh:</strong> Sri W</p>
+        <p><strong>Tanggal:</strong> 15 Agustus 2026</p>
+        <hr>
+        <p class="text-muted">
+          Aplikasi ini digunakan untuk pengambilan nomor  inspeksi dan autoupdate capaian pemeriksaan berdasarkan renlak.
+          Data disimpan di supabase..Kecepatan penyajian data kurang dari 200 milidetik.  data dapat diekspor ke Excel
+        </p>
+        <p class="text-muted small">
+          Teknologi: HTML, CSS, JavaScript, Bootstrap 5, Supabase, SheetJS.
+        </p>
+        <hr>
+        <p class="text-muted small">
+          &copy; 2026 -user hanya khusus petugas BPOM.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script>
