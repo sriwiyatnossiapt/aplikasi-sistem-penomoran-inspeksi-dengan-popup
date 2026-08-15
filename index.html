@@ -346,18 +346,13 @@
                   <div class="col-md-3">
                     <input type="text" id="filterRiwayatSarana" class="form-control" placeholder="Cari sarana..." oninput="applyRiwayatFilters()">
                   </div>
-                  <div class="col-md-3">
-                    <input type="date" id="filterRiwayatTanggal" class="form-control" onchange="applyRiwayatFilters()">
-                  </div>
+
                   <div class="col-md-2">
                     <button class="btn btn-outline-danger btn-sm w-100" onclick="resetRiwayatFilters()">
                       <i class="fas fa-undo me-1"></i> Reset
                     </button>
                   </div>
-                  <div class="col-md-4 text-end text-muted small">
-                    <i class="fas fa-info-circle me-1"></i> Data dari tabel generate_nomor
-                  </div>
-                </div>
+               </div>
 
                 <div id="riwayatLoading" class="text-center py-4">
                   <div class="spinner-border text-primary" role="status">
@@ -768,7 +763,8 @@
     // ================================================================
     //  LOAD DATA RIWAYAT (generate_nomor)
     // ================================================================
-  async function loadRiwayatData() {
+    // ================================================================
+async function loadRiwayatData() {
   const loading = document.getElementById('riwayatLoading');
   const tableWrap = document.getElementById('riwayatTableWrap');
   const emptyMsg = document.getElementById('riwayatEmpty');
@@ -781,7 +777,7 @@
     const { data, error } = await supabaseClient
       .from(TABLE_INSPEKSI)
       .select('*')
-      .order('no', { ascending: false });
+      .order('timestamp', { ascending: true }); // ← urutkan berdasarkan timestamp
 
     if (error) {
       console.warn('Supabase error (riwayat):', error.message);
@@ -799,28 +795,9 @@
       return;
     }
 
-    // === SORTING MANUAL di JavaScript ===
-    allRiwayat = data.sort((a, b) => {
-      // Ubah format DD/MM/YYYY ke Date untuk sorting
-      const parseDate = (str) => {
-        if (!str) return new Date(0); // null dianggap paling lama
-        // Coba format ISO dulu
-        let d = new Date(str);
-        if (!isNaN(d)) return d;
-        // Jika gagal, coba DD/MM/YYYY
-        const parts = str.split(' ')[0].split('/');
-        if (parts.length === 3) {
-          // asumsi DD/MM/YYYY
-          return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-        }
-        return new Date(0);
-      };
-      const dateA = parseDate(a.timestamp);
-      const dateB = parseDate(b.timestamp);
-      return dateB - dateA; // descending (terbaru di atas)
-    });
-
-    console.log('✅ Data riwayat:', allRiwayat.length, 'baris');
+    // ✅ Langsung assign, tanpa sorting manual
+    allRiwayat = data;
+    console.log('✅ Data riwayat (terurut):', allRiwayat.map(r => r.timestamp));
 
     renderRiwayatTable(allRiwayat);
     loading.style.display = 'none';
@@ -834,8 +811,6 @@
     emptyMsg.style.display = 'block';
   }
 }
-
-  // ================================================================
     //  RENDER TABEL RIWAYAT
     // ================================================================
     function renderRiwayatTable(data) {
@@ -877,15 +852,7 @@
       if (filterSarana) {
         filtered = filtered.filter(row => (row.sarana || '').toLowerCase().includes(filterSarana));
       }
-      if (filterTanggal) {
-        filtered = filtered.filter(row => {
-          if (!row.timestamp) return false;
-          // timestamp format "DD/MM/YYYY HH:mm" atau "YYYY-MM-DDTHH:mm"
-          const datePart = row.timestamp.split(' ')[0] || row.timestamp.split('T')[0];
-          return datePart === filterTanggal;
-        });
-      }
-
+    
       renderRiwayatTable(filtered);
     }
 
@@ -1131,7 +1098,8 @@
       const eInspeksi = document.getElementById('jenisInspeksi');
       const eMetode = document.getElementById('metodeInspeksi');
       const eJudulBA = document.getElementById('judulBeritaAcara');
-      const eTimestamp = document.getElementById('timestampInput').value;
+      const now = new Date();
+      const eTimestamp = now.toISOString().replace('T', ' ').slice(0, 19);
       const eJenisData = document.getElementById('jenisData').value;
 
       const existingInfo = resultArea.querySelectorAll('.supabase-info');
