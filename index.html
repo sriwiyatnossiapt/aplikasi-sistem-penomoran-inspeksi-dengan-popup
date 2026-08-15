@@ -1257,6 +1257,7 @@ function resetRiwayatFilters() {
         resultArea.className = 'result-box bg-success bg-opacity-10 text-success';
         resultStatus.innerText = '✓ Data Tersimpan!';
         resultDetail.innerText = nomorInspeksi;
+        resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         eJudulBA.value = '';
         eUsaha.value = '';
