@@ -1105,6 +1105,10 @@ function resetRiwayatFilters() {
     tambahBarisPetugas();
     tambahBtn.addEventListener('click', function() { tambahBarisPetugas(); });
 
+    function normalizeSarana(str) {
+      return str.trim().replace(/\s+/g, ' ');
+    }
+
     async function submitForm(e) {
       e.preventDefault();
       updateTimestamp();
@@ -1139,6 +1143,44 @@ function resetRiwayatFilters() {
       const existingInfo = resultArea.querySelectorAll('.supabase-info');
       existingInfo.forEach(el => el.remove());
       resultArea.classList.remove('d-none');
+
+      // Cek dulu apakah sarana terdaftar di renlak SEBELUM generate nomor
+      const sarana = normalizeSarana(eJudulBA.value);
+      let tabelTarget = '';
+      let refreshFunction = null;
+      let existingData = null;
+      let findError = null;
+
+      if (sarana && eJenisData !== 'lain') {
+        if (eJenisData === 'SK') {
+          tabelTarget = TABLE_SK;
+          refreshFunction = loadRenlakData;
+        } else if (eJenisData === 'OBA') {
+          tabelTarget = TABLE_OBA;
+          refreshFunction = loadRenlakObaData;
+        }
+
+        if (tabelTarget) {
+          const cekHasil = await supabaseClient
+            .from(tabelTarget)
+            .select('no, sarana')
+            .ilike('sarana', sarana)
+            .maybeSingle();
+
+          existingData = cekHasil.data;
+          findError = cekHasil.error;
+
+          if (!findError && !existingData) {
+            const lanjut = confirm(`Sarana "${sarana}" tidak ada di renlak ${tabelTarget}. Apakah mau tetap mengenerate nomor?`);
+            if (!lanjut) {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-save me-2"></i>Generate & Simpan Nomor';
+              resultArea.classList.add('d-none');
+              return;
+            }
+          }
+        }
+      }
 
       try {
         // Generate nomor inspeksi
@@ -1187,29 +1229,11 @@ function resetRiwayatFilters() {
           throw insertError;
         }
 
-        // Update renlak (SK/OBA) – sama seperti sebelumnya
-        const sarana = eJudulBA.value.trim();
+        // Update renlak (SK/OBA) – menggunakan hasil cek sarana di awal
         const todayDate = new Date().toISOString().split('T')[0];
 
         if (sarana && eJenisData !== 'lain') {
-          let tabelTarget = '';
-          let refreshFunction = null;
-
-          if (eJenisData === 'SK') {
-            tabelTarget = TABLE_SK;
-            refreshFunction = loadRenlakData;
-          } else if (eJenisData === 'OBA') {
-            tabelTarget = TABLE_OBA;
-            refreshFunction = loadRenlakObaData;
-          }
-
           if (tabelTarget) {
-            const { data: existingData, error: findError } = await supabaseClient
-              .from(tabelTarget)
-              .select('no, sarana')
-              .eq('sarana', sarana)
-              .maybeSingle();
-
             if (findError) {
               const info = document.createElement('p');
               info.className = 'text-danger small mt-2 supabase-info';
