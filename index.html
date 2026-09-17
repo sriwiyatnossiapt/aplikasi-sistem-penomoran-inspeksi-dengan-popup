@@ -1171,7 +1171,7 @@ function resetRiwayatFilters() {
           findError = cekHasil.error;
 
           if (!findError && !existingData) {
-            const lanjut = confirm(`Sarana "${sarana}" tidak ada di renlak. pastikan nama sarana sama. kembali ke renlak dan klik nama sarana. Jika memang tidak terdaftar di renlak apakah mau tetap mengenerate nomor?`);
+            const lanjut = confirm(`Sarana "${sarana}" tidak ada di renlak. pastikan nama sarana sama. kembali ke renlak dan klik 2x nama sarana. Jika memang tidak terdaftar di renlak apakah mau tetap mengenerate nomor?`);
             if (!lanjut) {
               btn.disabled = false;
               btn.innerHTML = '<i class="fas fa-save me-2"></i>Generate & Simpan Nomor';
