@@ -438,6 +438,7 @@
         <p id="konfirmasiSaranaText" class="mb-0"></p>
       </div>
       <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" id="btnKembaliSarana">Kembali</button>
         <button type="button" class="btn btn-outline-secondary" id="btnKeRenlak">Ke Renlak</button>
         <button type="button" class="btn btn-primary" id="btnLanjutkanGenerate">Lanjutkan</button>
       </div>
@@ -1135,10 +1136,12 @@ function resetRiwayatFilters() {
 
         const btnLanjutkan = document.getElementById('btnLanjutkanGenerate');
         const btnKeRenlak = document.getElementById('btnKeRenlak');
+        const btnKembali = document.getElementById('btnKembaliSarana');
 
         function bersihkanListener() {
           btnLanjutkan.removeEventListener('click', onLanjutkan);
           btnKeRenlak.removeEventListener('click', onKeRenlak);
+          btnKembali.removeEventListener('click', onKembali);
         }
 
         function onLanjutkan() {
@@ -1153,8 +1156,15 @@ function resetRiwayatFilters() {
           resolve('renlak');
         }
 
+        function onKembali() {
+          bersihkanListener();
+          modalInstance.hide();
+          resolve('kembali');
+        }
+
         btnLanjutkan.addEventListener('click', onLanjutkan);
         btnKeRenlak.addEventListener('click', onKeRenlak);
+        btnKembali.addEventListener('click', onKembali);
 
         modalInstance.show();
       });
@@ -1222,7 +1232,7 @@ function resetRiwayatFilters() {
           findError = cekHasil.error;
 
           if (!findError && !existingData) {
-            const pilihan = await tampilkanKonfirmasiSarana(`Sarana "${sarana}" tidak ada di renlak. pastikan nama sarana sama. kembali ke renlak dan klik 2x nama sarana. Jika memang tidak terdaftar di renlak apakah mau tetap mengenerate nomor?`);
+            const pilihan = await tampilkanKonfirmasiSarana(`Sarana "${sarana}" tidak ada di renlak. pastikan nama sarana sama.buka renlak dan klik 2x nama sarana. Jika memang tidak terdaftar di renlak apakah mau tetap mengenerate nomor?`);
             if (pilihan === 'renlak') {
               btn.disabled = false;
               btn.innerHTML = '<i class="fas fa-save me-2"></i>Generate & Simpan Nomor';
@@ -1232,6 +1242,12 @@ function resetRiwayatFilters() {
               } else if (eJenisData === 'OBA') {
                 showPage('renlakOba');
               }
+              return;
+            } else if (pilihan === 'kembali') {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-save me-2"></i>Generate & Simpan Nomor';
+              resultArea.classList.add('d-none');
+              eJudulBA.focus();
               return;
             }
           }
